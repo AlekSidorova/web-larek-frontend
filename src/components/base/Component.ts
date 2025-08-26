@@ -9,10 +9,19 @@ export abstract class Component<T = unknown> {
     this.container = container;
   }
 
-  // возвращает контейнер, которрый мы сохранили
+  // возвращает контейнер, который мы сохранили DOM
   render(): HTMLElement {
     return this.container;
   }
 
+  show() {
+    this.container.classList.add('modal_active');
+  }
+
+  hide() {
+    this.container.classList.remove('modal_active');
+  }
+
+  // Каждый наследник обязан реализовать обновление данных
   abstract setData(data: T): void;
 }
