@@ -1,5 +1,5 @@
 export interface ICard { //карточка
-  _id: string;
+  id: string;
   image: string;
   title: string;
   category: string;
@@ -17,8 +17,8 @@ export interface ICardData { //структура, которая отвечае
   deleteCard(cardID: string): void; 
 } 
 
-export interface IBasket { //корзина 
-  _id: string;
+export interface IBasket { // интерфейс для данных корзины
+  id: string;
   total: number | null;
   items: ICard[]; 
   addItem(card: ICard): void; 
