@@ -1,6 +1,7 @@
 import { Component } from "../base/Component"; //функциональность
 import { ICard } from "../../types"; //типы данных
 import { templates } from "../base/templates";
+import { events } from "../../index"; 
 
 export class ProductCard extends Component<ICard> {
   private cardData!: ICard;
@@ -12,7 +13,7 @@ export class ProductCard extends Component<ICard> {
     super(templates.cardCatalog());
   }
 
-  //создает новый элемент карточки
+  //создает новый элемент карточки - строит карточку из каталога (templates.cardCatalog)
   private createCardElement(): HTMLElement {
     const element = templates.cardCatalog(); //базовая разметка для карточки
 
@@ -47,8 +48,12 @@ export class ProductCard extends Component<ICard> {
     return element;
   }
 
+  //открывает модалку-превью с помощью EventEmitter
   private addEventListeners(): void  {
-    //пока пусто
+    this.cardElement.addEventListener(
+      'click',
+      events.trigger('card:open', {card: this.cardData})
+    )
   }
 
   private buy(): void  {
