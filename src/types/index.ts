@@ -1,4 +1,5 @@
-export interface ICard { //карточка
+//карточка
+export interface ICard { 
   id: string;
   image: string;
   title: string;
@@ -7,7 +8,8 @@ export interface ICard { //карточка
   description?: string;
 }
 
-export interface ICardData { //структура, которая отвечает за множество карточек 
+//управление списком карточек (каталог)
+export interface ICardData { 
   cards: ICard[];
   preview: string | null; 
   openCard(card: ICard): void;
@@ -17,7 +19,8 @@ export interface ICardData { //структура, которая отвечае
   deleteCard(cardID: string): void; 
 } 
 
-export interface IBasket { // интерфейс для данных корзины
+// интерфейс для данных корзины
+export interface IBasket { 
   id: string;
   total: number | null;
   items: ICard[]; 
@@ -27,7 +30,6 @@ export interface IBasket { // интерфейс для данных корзи�
   getItems(): ICard[]; 
 }
 
-
 export interface IValidationForm {
   buttonError: boolean; //не выбрана кнопка
   addressError: string; //не введен адрес доставки
@@ -36,8 +38,24 @@ export interface IValidationForm {
   checkValidation(): boolean; // Метод для проверки всех полей
 }
 
+// данные заказа (то, что мы отправляем на сервер)
+export interface IOrder {
+  items: string[]; //id товары из корзины
+  address: string; //адрес доставки
+  email: string; //почта
+  phone: string; //телефон
+}
 
+//ответ от сервера после создания заказа
+export interface IOrderResult {
+  id: string; //id заказа на сервере
+  total: number; //итоговая сумма
+}
 
-
-// пример типа, которые могут использовать
-// уже прописанные интерфейсы T... = Pick<ICard, '_id' | 'category' | 'title' | 'image' | 'price'>; //главная страница
+// интерфейс для модели внутри приложения
+export interface IOrderModel {
+  setData(inputData: Record<string, string>): void;
+  getData(): Record<string, string>;
+  getErrors(): Record<string, string>;
+  isValid(): boolean;
+}
