@@ -1,4 +1,5 @@
 import { IEvents } from "../base/events"; //инт определяет как нужно работать с событиями
+import { ProductCard } from "./ProductCard";
 
 export class Page {
   private container: HTMLElement;
@@ -16,8 +17,8 @@ export class Page {
     this.addEventListeners();
   }
 
-  renderCards(cards: HTMLElement[]): void {
-    this.container.replaceChildren(...cards);
+  renderCards(cards: ProductCard[]): void {
+    this.container.replaceChildren(...cards.map(c => c.getElement()));
   }
 
   updateCartCounter(count: number): void {
