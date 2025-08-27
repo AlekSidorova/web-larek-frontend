@@ -15,6 +15,7 @@ export const templates = {
   //постоянные элементы
   page: document.querySelector('.page') as HTMLElement,
   modalContainer: document.getElementById('modal-container') as HTMLElement,
+  gallery: document.querySelector('.gallery') as HTMLElement,
 
   //копируемые шаблоны
   success:() => getTemplate('#success'),
