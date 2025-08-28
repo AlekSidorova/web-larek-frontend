@@ -52,7 +52,11 @@ export class ProductCard extends Component<ICard> {
 		}
 
 		if (image) {
-			image.src = this.cardData.image;
+			if (this.cardData.image.endsWith('.svg')) { //проверяет, заканчивается ли строка на svg
+				image.src = this.cardData.image.replace('.svg', '.png'); //если да - меняем
+			} else {
+				image.src = this.cardData.image; //если нет - оставляем как есть
+			}
 		}
 
 		if (price) {
