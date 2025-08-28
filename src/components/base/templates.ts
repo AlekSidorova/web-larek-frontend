@@ -1,28 +1,20 @@
-//функция для шаблонов
-function getTemplate(id: string): HTMLElement {
-  const tpl = document.querySelector<HTMLTemplateElement>(id);
+import { ensureElement,cloneTemplate } from "../../utils/utils" 
 
-  //проверяем, нашелся ли шаблон
-  if (!tpl) { //если нет - ошибка
-    throw new Error(`Шаблон ${id} не найден`) 
-  } 
+export const templates = { 
+  page: ensureElement<HTMLElement>('.page'), 
+  modalContainer: ensureElement<HTMLElement>('#modal-container'), 
+  modalContent: ensureElement<HTMLElement>('.modal__content'), 
+  modalClose: ensureElement<HTMLElement>('.modal__close'), 
+  gallery: ensureElement<HTMLElement>('.gallery'), 
 
-  //получаем содержимое первого элемента шаблона и клонируем
-  return tpl.content.firstElementChild.cloneNode(true) as HTMLElement;
-}
+  success:() => cloneTemplate('#success'),
+  cardCatalog:() => cloneTemplate('#card-catalog'),
+  cardPreview:() => cloneTemplate('#card-preview'),
+  cardBasket:() => cloneTemplate('#card-basket'),
+  basket:() => cloneTemplate('#basket'),
+  order:() => cloneTemplate('#order'),
+  contacts:() => cloneTemplate('#contacts')
+};
 
-export const templates = {
-  //постоянные элементы
-  page: document.querySelector('.page') as HTMLElement,
-  modalContainer: document.getElementById('modal-container') as HTMLElement,
-  gallery: document.querySelector('.gallery') as HTMLElement,
 
-  //копируемые шаблоны
-  success:() => getTemplate('#success'),
-  cardCatalog:() => getTemplate('#card-catalog'),
-  cardPreview:() => getTemplate('#card-preview'),
-  cardBasket:() => getTemplate('#card-basket'),
-  basket:() => getTemplate('#basket'),
-  order:() => getTemplate('#order'),
-  contacts:() => getTemplate('#contacts')
-}
+

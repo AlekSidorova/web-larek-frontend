@@ -59,3 +59,21 @@ export interface IOrderModel {
   getErrors(): Record<string, string>;
   isValid(): boolean;
 }
+
+//тип модалки
+export type ModalContentType = 'product' | 'basket' | 'checkoutStep1' | 'checkoutStep2';
+
+export interface IModalData {
+  content: HTMLElement | ModalContentType;
+  card?: ICard;
+}
+
+//интерфейс для типа модалки
+export interface IModalUpdatePayload {
+  type: ModalContentType;
+  card: ICard | null;
+}
+
+export interface ICardOpenPayload {
+  card: ICard;
+}

@@ -6,6 +6,7 @@ html, body.page {
 	font-size: $baseFontSize;
 	color: $baseFontColor;
 	background: $background;
+	overflow-x: hidden;
 }
 
 .page__wrapper {
@@ -13,5 +14,6 @@ html, body.page {
 
 	&_locked {
 		position: fixed;
+		overflow: hidden;
 	}
 }

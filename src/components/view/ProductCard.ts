@@ -1,6 +1,6 @@
 import { Component } from '../base/Component'; //функциональность
 import { ICard } from '../../types'; //типы данных
-import { templates } from '../base/templates';
+import { ensureElement, cloneTemplate } from '../../utils/utils';
 import { events } from '../../index';
 
 export class ProductCard extends Component<ICard> {
@@ -10,62 +10,47 @@ export class ProductCard extends Component<ICard> {
 	constructor() {
 		//вызываем конструктор родителя Component
 		//это наш основной элемент для карточки
-		super(templates.cardCatalog());
+		super(cloneTemplate('#card-catalog'));
 	}
 
-	//создает новый элемент карточки - строит карточку из каталога (templates.cardCatalog)
+	//создает новый элемент карточки 
 	private createCardElement(): HTMLElement {
-		const element = templates.cardCatalog(); //базовая разметка для карточки
+		const element = cloneTemplate('#card-catalog'); //базовая разметка для карточки
+
+		//Сохраняем для getElement() и addEventListeners()
+    this.cardElement = element;
 
 		//находим элементы внутри карточки
-		const category = element.querySelector('.card__category');
-		const title = element.querySelector('.card__title');
-		const image = element.querySelector('.card__image') as HTMLImageElement; //это картинка
-		const price = element.querySelector('.card__price');
+		const category = ensureElement<HTMLElement>('.card__category', element);
+		const title = ensureElement<HTMLElement>('.card__title', element);
+		const image = ensureElement<HTMLImageElement>('.card__image', element);
+		const price = ensureElement<HTMLElement>('.card__price', element);
 
 		//заполняем карточку данными
-		if (category) {
-			category.textContent = this.cardData.category;
+		const categoryClassMap: Record<string, string> = {
+			'софт-скил': 'card__category_soft',
+			'хард-скил': 'card__category_hard',
+			другое: 'card__category_other',
+			дополнительно: 'card__category_additional',
+			кнопка: 'card__category_button',
+		};
+		category.textContent = this.cardData.category;
+		category.className = `card__category ${
+			categoryClassMap[this.cardData.category.toLowerCase()] || ''
+		}`;
 
-			//очищаем старые классы и навешиваем новые
-			switch (this.cardData.category.toLowerCase()) {
-				case 'софт-скил':
-					category.classList.add('card__category_soft');
-					break;
-				case 'другое':
-					category.classList.add('card__category_other');
-					break;
-				case 'хард-скил':
-					category.classList.add('card__category_hard');
-					break;
-				case 'дополнительно':
-					category.classList.add('card__category_additional');
-					break;
-				case 'кнопка':
-					category.classList.add('card__category_button');
-					break;
-			}
-		}
+		// title
+		title.textContent = this.cardData.title;
 
-		if (title) {
-			title.textContent = this.cardData.title;
-		}
+		// image
+		image.src = this.cardData.image.endsWith('.svg')
+			? this.cardData.image.replace('.svg', '.png')
+			: this.cardData.image;
 
-		if (image) {
-			if (this.cardData.image.endsWith('.svg')) { //проверяет, заканчивается ли строка на svg
-				image.src = this.cardData.image.replace('.svg', '.png'); //если да - меняем
-			} else {
-				image.src = this.cardData.image; //если нет - оставляем как есть
-			}
-		}
-
-		if (price) {
-			if (this.cardData.price) {
-				price.textContent = `${this.cardData.price} синапсов`;
-			} else {
-				price.textContent = 'Бесценно';
-			}
-		}
+		// price
+		price.textContent = this.cardData.price
+			? `${this.cardData.price} синапсов`
+			: 'Бесценно';
 
 		//возвращаем заполненный элемент
 		return element;
@@ -73,10 +58,14 @@ export class ProductCard extends Component<ICard> {
 
 	//открывает модалку-превью с помощью EventEmitter
 	private addEventListeners(): void {
-		this.cardElement.addEventListener('click', () => {
-			events.trigger('card:open', { card: this.cardData });
-		});
-	}
+  if (!this.cardElement || this.cardElement.dataset.listenerAdded) return;
+
+  this.cardElement.addEventListener('click', () => {
+    events.emit('card:open', { card: this.cardData }); // передаем данные
+  });
+
+  this.cardElement.dataset.listenerAdded = 'true';
+}
 
 	private buy(): void {
 		//пока пусто
@@ -86,6 +75,10 @@ export class ProductCard extends Component<ICard> {
 		//если this.cardElement пустой метод вернет this.container
 		return this.cardElement ?? this.container;
 	}
+
+	getData(): ICard {
+  return this.cardData;
+}
 
 	setData(data: ICard): void {
 		this.cardData = data;
