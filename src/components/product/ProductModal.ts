@@ -26,6 +26,10 @@ export class ProductModal extends ProductView {
       btn.addEventListener('click', () => this.events.emit('cart:add', { product }));
     }
 
+		//ставим картинке марджин 0
+    const imageEl = ensureElement<HTMLImageElement>('.card__image', template);
+    imageEl.style.margin = '0';
+
     this.container.replaceChildren(template);
   }
 }
