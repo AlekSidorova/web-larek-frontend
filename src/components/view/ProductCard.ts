@@ -1,5 +1,6 @@
 import { Component } from '../base/Component'; //функциональность
-import { ICard } from '../../types'; //типы данных
+import { ICard, ICategory} from '../../types'; //типы данных
+import { categories } from '../base/categories'; //массив с категорями
 import { ensureElement, cloneTemplate } from '../../utils/utils';
 import { events } from '../../index';
 
@@ -21,23 +22,21 @@ export class ProductCard extends Component<ICard> {
 		this.cardElement = element;
 
 		//находим элементы внутри карточки
-		const category = ensureElement<HTMLElement>('.card__category', element);
+		const categoryElement = ensureElement<HTMLElement>('.card__category', element);
 		const title = ensureElement<HTMLElement>('.card__title', element);
 		const image = ensureElement<HTMLImageElement>('.card__image', element);
 		const price = ensureElement<HTMLElement>('.card__price', element);
 
-		//заполняем карточку данными
-		const categoryClassMap: Record<string, string> = {
-			'софт-скил': 'card__category_soft',
-			'хард-скил': 'card__category_hard',
-			'другое': 'card__category_other',
-			'дополнительное': 'card__category_additional',
-			'кнопка': 'card__category_button',
-		};
-		category.textContent = this.cardData.category;
-		category.className = `card__category ${
-			categoryClassMap[this.cardData.category.toLowerCase()] || ''
-		}`;
+// заполняем карточку данными
+        categoryElement.textContent = this.cardData.category;
+
+        // Находим соответствующий класс для категории
+        const categoryMatch = categories.find((category: ICategory) => 
+            category.name === this.cardData.category.toLowerCase()
+        );
+
+        // Устанавливаем класс для категории
+        categoryElement.className = `card__category ${categoryMatch ? categoryMatch.className : ''}`;
 
 		// title
 		title.textContent = this.cardData.title;

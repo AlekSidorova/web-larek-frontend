@@ -13,7 +13,10 @@
   &_full {
     flex-direction: row;
     background-color: transparent;
-
+    display: flex;
+    align-items: stretch;
+    gap: 5%;
+    
     .card__title {
       flex-grow: 0;
     }
@@ -45,7 +48,8 @@
   &__image {
     height: 390px;
     aspect-ratio: 1;
-    margin: 3.75rem auto;
+    margin: 3.55rem auto;
+
   }
   &__title {
     font-size: $titleFontSize;
@@ -63,6 +67,7 @@
     border-radius: 2.5rem;
     margin-bottom: 12px;
     color: $primary;
+
 
     &_soft {
       background-color: $category1;

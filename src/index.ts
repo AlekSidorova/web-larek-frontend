@@ -4,14 +4,15 @@ import { AppApi } from './components/AppApi';
 import { EventEmitter } from './components/base/events';
 import { templates } from './components/base/templates';
 import { API_URL, CDN_URL } from './utils/constants';
-import { IModalUpdatePayload, ICard } from './types';
+import { ICard } from './types';
 
 import { Page } from './components/view/Page';
 import { ProductCard } from './components/view/ProductCard'; 
 import { Modal } from './components/view/Modal';
+import { ProductModal } from './components/view/ProductModal';
 
-//единый «телефон» (events), по которому разные 
-//кусочки проекта могут общаться, не зная друг о друге напрямую  
+
+// единый «телефон» (events), по которому разные кусочки проекта могут общаться
 export const events = new EventEmitter();
 
 //создаем апи
@@ -28,36 +29,24 @@ const page = new Page(
 //создаем modal
 const modal = new Modal('#' + templates.modalContainer.id, events);
 
-// Слушаем обновления модалки
-events.on('modal:update', ({ type, card }: IModalUpdatePayload) => {
-  console.log('modal:update', type, card);
 
-  const contentEl = templates.modalContent;
-  contentEl.replaceChildren();
-
-  switch (type) {
-    case 'product':
-      contentEl.append(templates.cardPreview());
-      break;
-    case 'basket':
-      contentEl.append(templates.basket());
-      break;
-    case 'checkoutStep1':
-      contentEl.append(templates.order());
-      break;
-    case 'checkoutStep2':
-      contentEl.append(templates.contacts());
-      break;
-  }
-});
+// --- Слушатели событий ---
 
 // Клик на карточку
 events.on('card:open', (data?: { card?: ICard }) => {
-  if (!data?.card) return; // безопасная проверка
+  if (!data?.card) return;
   console.log('card:open → карточка кликнута', data.card);
 
+  // Создаём контейнер с шаблоном
+  const contentEl = templates.cardPreview();
+
+  // Рендерим карточку в модалке
+  const productModal = new ProductModal(contentEl, events);
+  productModal.displayProduct(data.card);
+
+  // Открываем модалку
   modal.setData({
-    content: templates.cardPreview(), // HTMLElement шаблона
+    content: contentEl,
     card: data.card
   });
 });
@@ -68,9 +57,18 @@ cartButton.addEventListener('click', () => {
   console.log('Клик на корзину');
   modal.setData({
     content: templates.basket(), // HTMLElement
-    card: undefined               // карточки нет
+    card: undefined              // карточки нет
   });
 });
+
+// // Переход к чекауту (этапы оформления)
+// events.on('checkout:step1', () => {
+//   modal.setData({ content: templates.order() });
+// });
+
+// events.on('checkout:step2', () => {
+//   modal.setData({ content: templates.contacts() });
+// });
 
 //загружаем список карточек
 api.getProductList().then((products) => {

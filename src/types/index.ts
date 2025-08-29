@@ -77,3 +77,9 @@ export interface IModalUpdatePayload {
 export interface ICardOpenPayload {
   card: ICard;
 }
+
+// создаем интерфейс для категорий
+export interface ICategory {
+    name: string; // имя категории
+    className: string; // соответствующий класс для стиля
+}
