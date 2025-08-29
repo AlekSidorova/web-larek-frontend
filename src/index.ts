@@ -6,10 +6,10 @@ import { templates } from './components/base/templates';
 import { API_URL, CDN_URL } from './utils/constants';
 import { ICard } from './types';
 
-import { Page } from './components/view/Page';
-import { ProductCard } from './components/view/ProductCard'; 
-import { Modal } from './components/view/Modal';
-import { ProductModal } from './components/view/ProductModal';
+import { Page } from './components/Page';
+import { ProductCard } from './components/product/ProductCard'; 
+import { Modal } from './components/Modal';
+import { ProductModal } from './components/product/ProductModal';
 
 
 // единый «телефон» (events), по которому разные кусочки проекта могут общаться
@@ -37,12 +37,12 @@ events.on('card:open', (data?: { card?: ICard }) => {
   if (!data?.card) return;
   console.log('card:open → карточка кликнута', data.card);
 
-  // Создаём контейнер с шаблоном
+  // Создаём контейнер с шаблоном для модалки
   const contentEl = templates.cardPreview();
 
-  // Рендерим карточку в модалке
+  // Рендерим карточку в модалке через ProductModal
   const productModal = new ProductModal(contentEl, events);
-  productModal.displayProduct(data.card);
+  productModal.setData(data.card); // теперь используем setData
 
   // Открываем модалку
   modal.setData({

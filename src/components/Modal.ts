@@ -1,7 +1,7 @@
-import { Component } from '../base/Component';
-import { IModalData, ModalContentType } from '../../types';
-import { IEvents } from '../base/events';
-import { ensureElement, cloneTemplate } from '../../utils/utils';
+import { Component } from './base/Component';
+import { IModalData, ModalContentType } from '../types/index';
+import { IEvents } from './base/events';
+import { ensureElement, cloneTemplate } from '../utils/utils';
 
 export class Modal extends Component<IModalData> {
   private modal: HTMLElement;
