@@ -40,4 +40,8 @@ export class BasketModel {
   getTotalPrice(): number {
     return this.totalPrice
   }
+
+    isInCart(id: string): boolean {
+    return this.items.some(item => item.id === id);
+  }
 }

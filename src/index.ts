@@ -6,14 +6,26 @@ import { templates } from './components/base/templates';
 import { API_URL, CDN_URL } from './utils/constants';
 import { ICard } from './types';
 
-import { Page } from './components/Page';
-import { ProductCard } from './components/product/ProductCard'; 
 import { Modal } from './components/Modal';
+import { Page } from './components/Page';
+
+import { ProductCard } from './components/product/ProductCard'; 
 import { ProductModal } from './components/product/ProductModal';
 
+import { BasketModal } from './components/basket/BasketModal';
+import { BasketModel } from './models/BasketModel';
 
 // единый «телефон» (events), по которому разные кусочки проекта могут общаться
 export const events = new EventEmitter();
+
+// создаём модель корзины
+export const basketModel = new BasketModel();
+
+// создаём BasketModal
+const basketModal = new BasketModal(
+  document.createElement('div'), // временный контейнер, потом заменим content в Modal
+  events
+);
 
 //создаем апи
 const api = new AppApi(API_URL, CDN_URL);
@@ -28,6 +40,8 @@ const page = new Page(
 
 //создаем modal
 const modal = new Modal('#' + templates.modalContainer.id, events);
+
+const cartButton = document.querySelector('.header__basket') as HTMLButtonElement;
 
 
 // --- Слушатели событий ---
@@ -52,13 +66,23 @@ events.on('card:open', (data?: { card?: ICard }) => {
 });
 
 // Клик на корзину
-const cartButton = document.querySelector('.header__basket') as HTMLButtonElement;
 cartButton.addEventListener('click', () => {
-  console.log('Клик на корзину');
+  basketModal.setData(); // наполняем корзину
   modal.setData({
-    content: templates.basket(), // HTMLElement
-    card: undefined              // карточки нет
+    content: basketModal.render(), // передаём готовый контейнер
+    card: undefined
   });
+});
+
+// Добавление товара в корзину
+events.on('cart:add', (data: { product: ICard }) => {
+  basketModel.addItem(data.product);
+  events.emit('basket:update'); // обновляем счётчик
+});
+
+// Обновление счётчика корзины в шапке
+events.on('basket:update', () => {
+  page.updateCartCounter(basketModel.getItems().length);
 });
 
 // // Переход к чекауту (этапы оформления)

@@ -71,4 +71,8 @@ export class Modal extends Component<IModalData> {
       if (e.key === 'Escape') this.close();
     });
   }
+
+  isActive(): boolean {
+    return this.modal.classList.contains('modal_active');
+  }
 }
