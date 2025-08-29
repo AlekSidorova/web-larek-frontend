@@ -1,10 +1,10 @@
-import { ProductView } from './ProductView';
+import { CardsData } from './CardsData';
 import { ICard } from '../../types';
 import { cloneTemplate, ensureElement } from '../../utils/utils';
 import { IEvents } from '../base/events';
 import { basketModel } from '../../index';
 
-export class ProductModal extends ProductView {
+export class ProductModal extends CardsData {
   private events: IEvents;
 
   constructor(container: HTMLElement, events: IEvents) {

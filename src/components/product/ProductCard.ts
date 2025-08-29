@@ -1,9 +1,9 @@
-import { ProductView } from './ProductView';
+import { CardsData } from './CardsData';
 import { ICard } from '../../types';
 import { cloneTemplate } from '../../utils/utils';
 import { events } from '../../index';
 
-export class ProductCard extends ProductView {
+export class ProductCard extends CardsData {
   private cardElement: HTMLElement;
 
   constructor(data?: ICard) {

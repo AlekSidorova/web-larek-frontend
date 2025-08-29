@@ -3,7 +3,7 @@ import { ICard, ICategory } from '../../types';
 import { categories } from '../base/categories';
 import { ensureElement } from '../../utils/utils';
 
-export abstract class ProductView extends Component<ICard> {
+export abstract class CardsData extends Component<ICard> {
   protected cardData!: ICard;
 
   protected fillBase(template: HTMLElement, data: ICard): void {
