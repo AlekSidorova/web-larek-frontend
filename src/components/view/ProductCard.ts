@@ -13,12 +13,12 @@ export class ProductCard extends Component<ICard> {
 		super(cloneTemplate('#card-catalog'));
 	}
 
-	//создает новый элемент карточки 
+	//создает новый элемент карточки
 	private createCardElement(): HTMLElement {
 		const element = cloneTemplate('#card-catalog'); //базовая разметка для карточки
 
 		//Сохраняем для getElement() и addEventListeners()
-    this.cardElement = element;
+		this.cardElement = element;
 
 		//находим элементы внутри карточки
 		const category = ensureElement<HTMLElement>('.card__category', element);
@@ -30,9 +30,9 @@ export class ProductCard extends Component<ICard> {
 		const categoryClassMap: Record<string, string> = {
 			'софт-скил': 'card__category_soft',
 			'хард-скил': 'card__category_hard',
-			другое: 'card__category_other',
-			дополнительно: 'card__category_additional',
-			кнопка: 'card__category_button',
+			'другое': 'card__category_other',
+			'дополнительное': 'card__category_additional',
+			'кнопка': 'card__category_button',
 		};
 		category.textContent = this.cardData.category;
 		category.className = `card__category ${
@@ -58,14 +58,14 @@ export class ProductCard extends Component<ICard> {
 
 	//открывает модалку-превью с помощью EventEmitter
 	private addEventListeners(): void {
-  if (!this.cardElement || this.cardElement.dataset.listenerAdded) return;
+		if (!this.cardElement || this.cardElement.dataset.listenerAdded) return;
 
-  this.cardElement.addEventListener('click', () => {
-    events.emit('card:open', { card: this.cardData }); // передаем данные
-  });
+		this.cardElement.addEventListener('click', () => {
+			events.emit('card:open', { card: this.cardData }); // передаем данные
+		});
 
-  this.cardElement.dataset.listenerAdded = 'true';
-}
+		this.cardElement.dataset.listenerAdded = 'true';
+	}
 
 	private buy(): void {
 		//пока пусто
@@ -77,8 +77,8 @@ export class ProductCard extends Component<ICard> {
 	}
 
 	getData(): ICard {
-  return this.cardData;
-}
+		return this.cardData;
+	}
 
 	setData(data: ICard): void {
 		this.cardData = data;
