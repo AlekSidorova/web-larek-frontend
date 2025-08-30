@@ -9,11 +9,11 @@ import { ICard } from './types';
 import { Modal } from './components/Modal';
 import { Page } from './components/Page';
 
-import { ProductCard } from './components/product/ProductCard'; 
-import { ProductModal } from './components/product/ProductModal';
+import { CardsCatalog } from './components/cards/CardsCatalog'; 
+import { CardModal } from './components/cards/CardModal';
 
 import { BasketModal } from './components/basket/BasketModal';
-import { BasketModel } from './models/BasketModel';
+import { BasketModel } from './components/models/BasketModel';
 
 // единый «телефон» (events), по которому разные кусочки проекта могут общаться
 export const events = new EventEmitter();
@@ -54,9 +54,9 @@ events.on('card:open', (data?: { card?: ICard }) => {
   // Создаём контейнер с шаблоном для модалки
   const contentEl = templates.cardPreview();
 
-  // Рендерим карточку в модалке через ProductModal
-  const productModal = new ProductModal(contentEl, events);
-  productModal.setData(data.card); // теперь используем setData
+  // Рендерим карточку в модалке через CardModal
+  const cardModal = new CardModal(contentEl, events);
+  cardModal.setData(data.card); // теперь используем setData
 
   // Открываем модалку
   modal.setData({
@@ -97,7 +97,7 @@ events.on('basket:update', () => {
 //загружаем список карточек
 api.getProductList().then((products) => {
   const cards = products.map((product) => {
-    const card = new ProductCard();
+    const card = new CardsCatalog();
 
     card.setData(product);
 

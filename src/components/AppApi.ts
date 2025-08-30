@@ -1,6 +1,5 @@
 import { Api, ApiListResponse } from "./base/api";
 import { ICard, IOrder, IOrderResult } from "../types";
-import { CDN_URL } from "../utils/constants";
 
 //класс наследует все от Api
 export class AppApi extends Api {

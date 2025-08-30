@@ -1,4 +1,4 @@
-import { IOrder, IOrderModel } from "../types";
+import { IOrder, IOrderModel } from "../../types/index";
 
 export class OrderModel implements IOrderModel {
   private data: Record<string, string> ={};

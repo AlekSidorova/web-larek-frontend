@@ -4,7 +4,7 @@ import { cloneTemplate, ensureElement } from '../../utils/utils';
 import { IEvents } from '../base/events';
 import { basketModel } from '../../index';
 
-export class ProductModal extends CardsData {
+export class CardModal extends CardsData {
   private events: IEvents;
 
   constructor(container: HTMLElement, events: IEvents) {

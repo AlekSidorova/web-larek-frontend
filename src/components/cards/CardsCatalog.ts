@@ -3,7 +3,7 @@ import { ICard } from '../../types';
 import { cloneTemplate } from '../../utils/utils';
 import { events } from '../../index';
 
-export class ProductCard extends CardsData {
+export class CardsCatalog extends CardsData {
   private cardElement: HTMLElement;
 
   constructor(data?: ICard) {

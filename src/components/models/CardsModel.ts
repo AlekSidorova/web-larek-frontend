@@ -1,6 +1,6 @@
-import { ICard } from '../types/index'
+import { ICard } from '../../types/index'
 
-export class ProductModel {
+export class CardsModel {
   private product: ICard;
 
   constructor(productData: ICard) {

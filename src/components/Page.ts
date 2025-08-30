@@ -1,5 +1,5 @@
 import { IEvents } from './base/events'; // интерфейс для работы с событиями
-import { ProductCard } from './product/ProductCard';
+import { CardsCatalog } from './cards/CardsCatalog';
 import { ensureElement } from '../utils/utils';
 
 export class Page {
@@ -24,12 +24,12 @@ export class Page {
 	}
 
 	/** Отрисовывает массив карточек на странице */
-	renderCards(cards: ProductCard[]): void {
+	renderCards(cards: CardsCatalog[]): void {
 		this.container.replaceChildren(...cards.map((c) => c.render()));
 	}
 
 	/** Добавляет карточку на страницу */
-	addCard(card: ProductCard): void {
+	addCard(card: CardsCatalog): void {
 		this.container.appendChild(card.render());
 	}
 

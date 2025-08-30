@@ -1,4 +1,4 @@
-import { ICard } from '../types/index'
+import { ICard } from '../../types/index'
 
 export class BasketModel {
   private items: ICard[];
