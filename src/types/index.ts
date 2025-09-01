@@ -60,6 +60,14 @@ export interface IOrderModel {
   isValid(): boolean;
 }
 
+export interface IOrderForm {
+  address: string;
+  email: string;
+  phone: string;
+  valid: boolean;         // флаг, есть ли ошибки
+  errors: string[];       // массив сообщений об ошибках
+}
+
 //тип модалки
 export type ModalContentType = 'product' | 'basket' | 'checkoutStep1' | 'checkoutStep2';
 
