@@ -35,14 +35,13 @@ export class ContactForm extends Form {
 		this.phoneInput.addEventListener('input', (e: Event) => {
 			const input = e.target as HTMLInputElement;
 
-			// Берём только цифры, игнорируем +7 и все скобки/пробелы
+			// Берём только цифры
 			let digits = input.value.replace(/\D/g, '');
 
-			// Если пользователь набирает 11 цифр и первая 7, убираем её
-			if (digits.length === 11 && digits.startsWith('7'))
-				digits = digits.slice(1);
+			// Убираем ведущую 7 или 8 (если пользователь вводит +7...)
+			if (digits.startsWith('7') || digits.startsWith('8')) digits = digits.slice(1);
 
-			// Оставляем максимум 10 цифр
+			// Ограничиваем максимум 10 цифр
 			digits = digits.substring(0, 10);
 
 			// Форматируем красиво
@@ -57,6 +56,9 @@ export class ContactForm extends Form {
 
 			// Сохраняем чистый номер в модель
 			appData.setOrderField('phone', '+7' + digits);
+
+			// Валидация
+			this.validate();
 		});
 
 		// Слушатель сабмита
@@ -72,17 +74,6 @@ export class ContactForm extends Form {
 
 		if (field === 'email') {
 			appData.setOrderField('email', strValue);
-		} else if (field === 'phone') {
-			let digits = strValue.replace(/\D/g, '');
-			if (digits.length > 10) digits = digits.slice(-10);
-			const formatted = '+7' + digits;
-
-			const phoneInput = this.formEl.querySelector<HTMLInputElement>(
-				'input[name="phone"]'
-			);
-			if (phoneInput) phoneInput.value = formatted;
-
-			appData.setOrderField('phone', formatted);
 		}
 
 		this.validate();
@@ -103,6 +94,7 @@ export class ContactForm extends Form {
 
 	// Сабмит формы
 	protected handleSubmit() {
+		// Данные уже сохранены в appData
 		events.emit('checkout:step2Completed');
 	}
 }
