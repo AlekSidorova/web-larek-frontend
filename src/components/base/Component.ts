@@ -3,7 +3,7 @@
 
 export abstract class Component<T = unknown> {
   // контейнер нельзя изменить после создания(readonly)
-  protected readonly container: HTMLElement;
+  readonly container: HTMLElement;
 
   constructor(container: HTMLElement) {
     this.container = container;

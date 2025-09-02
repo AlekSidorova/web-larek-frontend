@@ -31,7 +31,7 @@ export class OrderModel implements IOrderModel {
 	getErrorMessage(separator: string = '; '): string {
 		return Object.values(this.errors)
 			.filter((i) => !!i) //убираем пустые строки
-			.join(separator); 
+			.join(separator);
 	}
 
 	//есть ли ошибки
@@ -42,6 +42,7 @@ export class OrderModel implements IOrderModel {
 
 	// правила валидации
 	private rules: Record<string, (value: string) => string | null> = {
+		paymentType: (value: string) => (!value ? '' : null),
 		address: (value: string) => {
 			if (isEmpty(value) || value.trim().length < 5) {
 				return 'Необходимо указать адрес';
@@ -51,14 +52,14 @@ export class OrderModel implements IOrderModel {
 		email: (value: string) => {
 			const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
 			if (isEmpty(value) || !emailRegex.test(value)) {
-				return 'Введите корректный email';
+				return '';
 			}
 			return null;
 		},
 		phone: (value: string) => {
 			const phoneRegex = /^\+?\d{10,15}$/;
 			if (isEmpty(value) || !phoneRegex.test(value)) {
-				return 'Введите корректный телефон';
+				return '';
 			}
 			return null;
 		},
@@ -66,7 +67,7 @@ export class OrderModel implements IOrderModel {
 
 	//проверяем данные на корректность
 	public validate(): void {
-		this.errors = {}; 
+		this.errors = {};
 		for (const field in this.rules) {
 			const value = this.data[field] ?? '';
 			const error = this.rules[field](value);
@@ -74,13 +75,19 @@ export class OrderModel implements IOrderModel {
 		}
 	}
 
-	// метод для подготовки данных к API (собираем в IOrder)
-	toApiOrder(items: string[]): IOrder {
-		return {
-			items,
-			address: this.data.address,
-			email: this.data.email,
-			phone: this.data.phone,
-		};
+	// метод для подготовки данных к API (собираем IOrder)
+	toApiOrder(items: string[]): IOrder & { payment: 'online' | 'cash' } {
+	const payment = this.data.payment; // теперь используем правильное поле
+	if (payment !== 'online' && payment !== 'cash') {
+		throw new Error('Не указан корректный способ оплаты');
 	}
+
+	return {
+		items,
+		address: this.data.address,
+		email: this.data.email,
+		phone: this.data.phone,
+		payment,
+	};
+}
 }

@@ -9,7 +9,7 @@ import { ICard, IOrderForm } from './types';
 import { Modal } from './components/Modal';
 import { Page } from './components/Page';
 
-import { CardsCatalog } from './components/cards/CardsCatalog'; 
+import { CardsCatalog } from './components/cards/CardsCatalog';
 import { CardModal } from './components/cards/CardModal';
 
 import { BasketModal } from './components/basket/BasketModal';
@@ -20,24 +20,27 @@ import { OrderModel } from './components/models/OrderModel';
 // единый «телефон» (events), по которому разные кусочки проекта могут общаться
 export const events = new EventEmitter();
 
-// создаём модель корзины
+// модели
 export const basketModel = new BasketModel();
-
-// Модель заказа
 export const order = new OrderModel();
 
 // appData — единый объект состояния
 export const appData = {
-  order,
-  setOrderField(field: keyof IOrderForm, value: string) {
-    this.order.setData({ [field]: value });
-  },
-  clearBasket() {
-    basketModel.clear();
-    events.emit('basket:update');
-  }
+	order,
+	setOrderField(field: keyof IOrderForm, value: string) {
+		if (field === 'payment') {
+			if (value === 'online' || value === 'cash') {
+				this.order.setData({ [field]: value });
+			}
+		} else {
+			this.order.setData({ [field]: value });
+		}
+	},
+	clearBasket() {
+		basketModel.clear();
+		events.emit('basket:update');
+	},
 };
-
 // Модалки
 const basketModal = new BasketModal(document.createElement('div'), events);
 const modal = new Modal('#' + templates.modalContainer.id, events);
@@ -47,88 +50,251 @@ const api = new AppApi(API_URL, CDN_URL);
 
 //создаем Page
 const page = new Page(
-  '.gallery', 
-  '.header__basket', 
-  '.header__basket-counter', 
-  events
+	'.gallery',
+	'.header__basket',
+	'.header__basket-counter',
+	events
 );
 
 // Кнопка корзины
-const cartButton = document.querySelector('.header__basket') as HTMLButtonElement;
+const cartButton = document.querySelector(
+	'.header__basket'
+) as HTMLButtonElement;
 
 // --- Слушатели событий ---
 
 // Клик на карточку
 events.on('card:open', (data?: { card?: ICard }) => {
-  if (!data?.card) return;
+	if (!data?.card) return;
 
-  // Создаём контейнер с шаблоном для модалки
-  const contentEl = templates.cardPreview();
+	// Создаём контейнер с шаблоном для модалки
+	const contentEl = templates.cardPreview();
 
-  // Рендерим карточку в модалке через CardModal
-  const cardModal = new CardModal(contentEl, events);
-  cardModal.setData(data.card); // теперь используем setData
+	// Рендерим карточку в модалке через CardModal
+	const cardModal = new CardModal(contentEl, events);
+	cardModal.setData(data.card); // теперь используем setData
 
-  // Открываем модалку
-  modal.setData({
-    content: contentEl,
-    card: data.card
-  });
+	// Открываем модалку
+	modal.setData({
+		content: contentEl,
+		card: data.card,
+	});
 });
 
 // Клик на корзину
 cartButton.addEventListener('click', () => {
-  basketModal.setData(); // наполняем корзину
-  modal.setData({
-    content: basketModal.render(), // передаём готовый контейнер
-    card: undefined
-  });
+	basketModal.setData();
+	modal.setData({
+		content: basketModal.render(),
+		card: undefined,
+	});
 });
 
 // Добавление товара в корзину
 events.on('cart:add', (data: { product: ICard }) => {
-  basketModel.addItem(data.product);
-  events.emit('basket:update'); // обновляем счётчик
+	basketModel.addItem(data.product);
+	events.emit('basket:update'); // обновляем счётчик
 });
 
 // Обновление счётчика корзины в шапке
 events.on('basket:update', () => {
-  page.updateCartCounter(basketModel.getItems().length);
+	page.updateCartCounter(basketModel.getItems().length);
 });
 
-// // Переход к чекауту (этапы оформления)
-// events.on('checkout:step1', () => {
-//   modal.setData({ content: templates.order() });
-// });
+// --- Оформление заказа ---
 
-// events.on('checkout:step2', () => {
-//   modal.setData({ content: templates.contacts() });
-// });
+// --- Шаг 1: выбор оплаты и адрес ---
+const setupStep1 = () => {
+	const form = document.querySelector<HTMLFormElement>('form[name="order"]');
+	if (!form) return;
+
+	const submitBtn = form.querySelector<HTMLButtonElement>('.order__button')!;
+	const paymentButtons = form.querySelectorAll<HTMLButtonElement>(
+		'.order__buttons button'
+	);
+	const addressInput = form.querySelector<HTMLInputElement>(
+		'input[name="address"]'
+	)!;
+	const errorsEl = form.querySelector<HTMLSpanElement>('.form__errors')!;
+
+	const update = () => {
+		const errors: string[] = [];
+		if (!addressInput.value.trim() || addressInput.value.trim().length < 5)
+			errors.push('Введите корректный адрес');
+		if (!appData.order.getData().payment) errors.push('');
+
+		errorsEl.textContent = errors.join('; ');
+		submitBtn.disabled = errors.length > 0;
+	};
+
+	// Выбор способа оплаты
+	paymentButtons.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			paymentButtons.forEach((b) => b.classList.remove('button_alt-active'));
+			btn.classList.add('button_alt-active');
+
+			const value = btn.name === 'card' ? 'online' : btn.name;
+			appData.setOrderField('payment', value as 'online' | 'cash');
+
+			update();
+		});
+	});
+
+	// Ввод адреса
+	addressInput.addEventListener('input', () => {
+		appData.setOrderField('address', addressInput.value);
+		update();
+	});
+
+	form.addEventListener('submit', (e) => {
+		e.preventDefault();
+		update();
+		if (!submitBtn.disabled) events.emit('checkout:step2');
+	});
+
+	update(); // начальное состояние
+};
+
+// --- Шаг 2: email и телефон ---
+const setupStep2 = () => {
+	const form = document.querySelector<HTMLFormElement>('form[name="contacts"]');
+	if (!form) return;
+
+	const submitBtn = form.querySelector<HTMLButtonElement>(
+		'button[type="submit"]'
+	)!;
+	const emailInput = form.querySelector<HTMLInputElement>(
+		'input[name="email"]'
+	)!;
+	const phoneInput = form.querySelector<HTMLInputElement>(
+		'input[name="phone"]'
+	)!;
+	const errorsEl = form.querySelector<HTMLSpanElement>('.form__errors')!;
+
+	const updateStep2 = () => {
+		const errors: string[] = [];
+
+		// Email
+		if (
+			!emailInput.value ||
+			!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(emailInput.value)
+		)
+			errors.push('');
+
+		// Телефон (должен быть полностью введён в формате +7 (XXX) XXX XX XX)
+		const phoneDigits = phoneInput.value.replace(/\D/g, '');
+		if (phoneDigits.length !== 11) errors.push('');
+
+		errorsEl.textContent = errors.join('; ');
+		submitBtn.disabled = errors.length > 0;
+	};
+
+	// Форматирование телефона во время ввода
+	phoneInput.addEventListener('input', () => {
+		let value = phoneInput.value.replace(/\D/g, '');
+		if (value.startsWith('7')) value = value.slice(1);
+
+		let formatted = '+7 ';
+		if (value.length > 0) formatted += '(' + value.substring(0, 3);
+		if (value.length >= 4) formatted += ') ' + value.substring(3, 6);
+		if (value.length >= 7) formatted += ' ' + value.substring(6, 8);
+		if (value.length >= 9) formatted += ' ' + value.substring(8, 10);
+
+		phoneInput.value = formatted;
+
+		updateStep2();
+	});
+
+	emailInput.addEventListener('input', updateStep2);
+
+	form.addEventListener('submit', (e) => {
+	e.preventDefault();
+	updateStep2();
+
+	if (!submitBtn.disabled) {
+		// Принудительно записываем email и phone в OrderModel
+		appData.order.setData({
+			email: emailInput.value.trim(),
+			phone: phoneInput.value.replace(/\D/g, '').padStart(11, '7'), // формат +7XXXXXXXXXX
+		});
+
+		console.log('Данные заказа перед API:', appData.order.getData());
+
+		events.emit('checkout:step2Completed');
+	}
+});
+
+	updateStep2(); // начальное состояние
+};
+
+// --- Слушатели событий ---
+events.on('checkout:step1', () => {
+	modal.setData({ content: templates.order() });
+	setupStep1();
+});
+
+events.on('checkout:step2', () => {
+	modal.setData({ content: templates.contacts() });
+	setupStep2();
+});
+
+// --- Отправка заказа ---
+events.on('checkout:step2Completed', () => {
+  const itemsIds = basketModel.getItems().map(item => item.id);
+  const totalPrice = basketModel.getTotalPrice(); // <--- берём сумму
+
+  try {
+    const apiOrder = {
+      ...appData.order.toApiOrder(itemsIds),
+      total: totalPrice, // <--- добавляем total
+    };
+
+    console.log('Данные заказа перед API:', apiOrder);
+
+    api.createOrder(apiOrder).then(result => {
+      const successEl = templates.success();
+      const descriptionEl = successEl.querySelector<HTMLParagraphElement>('.order-success__description');
+      if (descriptionEl) descriptionEl.textContent = `Списано ${totalPrice} синапсов`;
+
+      const closeBtn = successEl.querySelector<HTMLButtonElement>('.order-success__close');
+      if (closeBtn) closeBtn.addEventListener('click', () => modal.close());
+
+      modal.setData({ content: successEl });
+
+      appData.clearBasket();
+    });
+  } catch (err) {
+    console.error(err);
+    alert('Ошибка при отправке заказа');
+  }
+});
 
 // Валидация формы заказа при изменении полей
-events.on(/^order\..*:change/, (data: { field: keyof IOrderForm; value: string }) => {
-  appData.setOrderField(data.field, data.value);
-  order.validate();
-  events.emit('formErrors:change', { message: order.getErrorMessage() });
-});
+events.on(
+	/^order\..*:change/,
+	(data: { field: keyof IOrderForm; value: string }) => {
+		appData.setOrderField(data.field, data.value);
+		order.validate();
+		events.emit('formErrors:change', { message: order.getErrorMessage() });
+	}
+);
 
 // Отображение ошибок на странице
 events.on('formErrors:change', (data: { message: string }) => {
-  const errorEl = document.querySelector('.order__errors');
-  if (errorEl) errorEl.textContent = data.message;
+	const errorEl = document.querySelector('.order__errors');
+	if (errorEl) errorEl.textContent = data.message;
 });
 
 //загружаем список карточек
 api.getProductList().then((products) => {
-  const cards = products.map((product) => {
-    const card = new CardsCatalog();
+	const cards = products.map((product) => {
+		const card = new CardsCatalog();
 
-    card.setData(product);
+		card.setData(product);
 
-    return card;
-  });
+		return card;
+	});
 
-  //выводим карточки
-  page.renderCards(cards);
-})
-
+	//выводим карточки
+	page.renderCards(cards);
+});

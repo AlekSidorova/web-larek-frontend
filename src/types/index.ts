@@ -40,10 +40,11 @@ export interface IValidationForm {
 
 // данные заказа (то, что мы отправляем на сервер)
 export interface IOrder {
-  items: string[]; //id товары из корзины
-  address: string; //адрес доставки
-  email: string; //почта
-  phone: string; //телефон
+  items: string[];              // id товаров из корзины
+  address: string;              // адрес доставки
+  email: string;                // почта
+  phone: string;                // телефон
+  payment: 'online' | 'cash';   // способ оплаты (обязательно)
 }
 
 //ответ от сервера после создания заказа
@@ -61,11 +62,12 @@ export interface IOrderModel {
 }
 
 export interface IOrderForm {
+  payment: 'online' | 'cash'; // обязательное для API
   address: string;
   email: string;
   phone: string;
-  valid: boolean;         // флаг, есть ли ошибки
-  errors: string[];       // массив сообщений об ошибках
+  valid: boolean;
+  errors: string[];
 }
 
 //тип модалки
@@ -90,4 +92,9 @@ export interface ICardOpenPayload {
 export interface ICategory {
     name: string; // имя категории
     className: string; // соответствующий класс для стиля
+}
+
+export interface IFormField {
+  name: string;
+  element: HTMLInputElement | HTMLButtonElement;
 }
