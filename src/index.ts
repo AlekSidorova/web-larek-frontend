@@ -174,8 +174,7 @@ const setupStep2 = () => {
 				email: emailInput.value.trim(),
 				phone: phoneInput.value.replace(/\D/g, '').padStart(11, '7'), // формат +7XXXXXXXXXX
 			});
-
-			console.log('Данные заказа перед API:', appData.order.getData());
+			
 			events.emit('checkout:step2Completed');
 		}
 	});
@@ -188,16 +187,15 @@ events.on('checkout:step2', () => {
 	setupStep2();
 });
 
-// --- Отправка заказа ---
 events.on('checkout:step2Completed', () => {
 	const itemsIds = basketModel.getItems().map((item) => item.id);
-	const totalPrice = basketModel.getTotalPrice(); // <--- берём сумму
+	const totalPrice = basketModel.getTotalPrice();
 
 	try {
-		const apiOrder = {
-			...appData.order.toApiOrder(itemsIds),
-			total: totalPrice, // <--- добавляем total
-		};
+		const apiOrder = appData.order.toApiOrder(itemsIds, totalPrice);
+
+		// 🔍 вот сюда добавь
+		console.log('Готовый заказ для API:', apiOrder);
 
 		api.createOrder(apiOrder).then((result) => {
 			const successEl = templates.success();

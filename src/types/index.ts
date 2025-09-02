@@ -45,6 +45,7 @@ export interface IOrder {
   email: string;                // почта
   phone: string;                // телефон
   payment: 'online' | 'cash';   // способ оплаты (обязательно)
+  total: number;                // итоговая сумма (обязательно для API)
 }
 
 //ответ от сервера после создания заказа

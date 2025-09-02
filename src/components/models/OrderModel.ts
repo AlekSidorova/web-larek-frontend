@@ -76,18 +76,19 @@ export class OrderModel implements IOrderModel {
 	}
 
 	// метод для подготовки данных к API (собираем IOrder)
-	toApiOrder(items: string[]): IOrder & { payment: 'online' | 'cash' } {
-	const payment = this.data.payment; // теперь используем правильное поле
-	if (payment !== 'online' && payment !== 'cash') {
-		throw new Error('Не указан корректный способ оплаты');
-	}
+toApiOrder(items: string[], total: number): IOrder {
+  const payment = this.data.payment;
+  if (payment !== 'online' && payment !== 'cash') {
+    throw new Error('Не указан корректный способ оплаты');
+  }
 
-	return {
-		items,
-		address: this.data.address,
-		email: this.data.email,
-		phone: this.data.phone,
-		payment,
-	};
-}
-}
+  return {
+    items,
+    address: this.data.address,
+    email: this.data.email,
+    phone: this.data.phone,
+    payment,
+    total, // <--- добавляем сюда
+  };
+}}
+
