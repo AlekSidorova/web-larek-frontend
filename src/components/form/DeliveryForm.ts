@@ -10,6 +10,7 @@ export class DeliveryForm extends Form {
   private addressInput: HTMLInputElement;
   private errorsEl: HTMLSpanElement;
   private submitBtn: HTMLButtonElement;
+  private isFirstRender = true; // флаг первого рендера
 
   constructor(formEl: HTMLFormElement, events: IEvents, order: OrderModel) {
     super(formEl, events);
@@ -31,14 +32,14 @@ export class DeliveryForm extends Form {
 
     // Слушатели для кнопок оплаты
     this.paymentButtons.forEach(button => {
-  button.addEventListener('click', () => {
-    this.paymentButtons.forEach(b => b.classList.remove('button_alt-active'));
-    button.classList.add('button_alt-active');
+      button.addEventListener('click', () => {
+        this.paymentButtons.forEach(b => b.classList.remove('button_alt-active'));
+        button.classList.add('button_alt-active');
 
-    const value = button.name === 'card' ? 'online' : button.name as 'cash';
-    this.onFieldChange('payment', value as IOrderForm['payment']);
-  });
-});
+        const value = button.name === 'card' ? 'online' : button.name as 'cash';
+        this.onFieldChange('payment', value as IOrderForm['payment']);
+      });
+    });
 
     // Слушатель ввода адреса
     this.addressInput.addEventListener('input', () => {
@@ -50,6 +51,9 @@ export class DeliveryForm extends Form {
       e.preventDefault();
       this.handleSubmit();
     });
+
+    // После первого рендера запрещаем игнорировать ошибки
+    this.isFirstRender = false;
   }
 
   // Обработка изменений полей
@@ -63,13 +67,13 @@ export class DeliveryForm extends Form {
     const data = this.order.getData();
     const errors: string[] = [];
 
-    if (data.payment) {
+    // Показываем ошибку только если выбран способ оплаты и это не первый рендер
+    if (data.payment && !this.isFirstRender) {
       if (!this.addressInput.value.trim() || this.addressInput.value.trim().length < 5) {
         errors.push('Необходимо указать адрес');
       }
     }
 
-    // Показываем ошибки
     this.errorsEl.textContent = errors.join('; ');
 
     // Кнопка активна только если нет ошибок и выбрана оплата
@@ -78,7 +82,7 @@ export class DeliveryForm extends Form {
 
   // Обработка submit
   protected handleSubmit() {
-    const data = appData.order.getData();
+    const data = this.order.getData();
     if (data.payment && data.address) {
       events.emit('checkout:step1Completed');
     }

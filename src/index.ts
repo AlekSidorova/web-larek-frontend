@@ -174,7 +174,7 @@ const setupStep2 = () => {
 				email: emailInput.value.trim(),
 				phone: phoneInput.value.replace(/\D/g, '').padStart(11, '7'), // формат +7XXXXXXXXXX
 			});
-			
+
 			events.emit('checkout:step2Completed');
 		}
 	});
@@ -218,12 +218,6 @@ events.on('checkout:step2Completed', () => {
 		console.error(err);
 		alert('Ошибка при отправке заказа');
 	}
-});
-
-// Отображение ошибок на странице
-events.on('formErrors:change', (data: { message: string }) => {
-	const errorEl = document.querySelector('.order__errors');
-	if (errorEl) errorEl.textContent = data.message;
 });
 
 //загружаем список карточек
