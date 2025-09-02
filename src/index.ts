@@ -17,6 +17,9 @@ import { BasketModel } from './components/models/BasketModel';
 
 import { OrderModel } from './components/models/OrderModel';
 
+import { DeliveryForm } from './components/form/DeliveryForm';
+import { ContactForm } from './components/form/ContactForm';
+
 // единый «телефон» (events), по которому разные кусочки проекта могут общаться
 export const events = new EventEmitter();
 
@@ -104,72 +107,30 @@ events.on('basket:update', () => {
 // --- Оформление заказа ---
 
 // --- Шаг 1: выбор оплаты и адрес ---
-const setupStep1 = () => {
-	const form = document.querySelector<HTMLFormElement>('form[name="order"]');
-	if (!form) return;
+events.on('checkout:step1', () => {
+  const formElement = templates.order();        // создаём форму
+  modal.setData({ content: formElement });      // вставляем в DOM
 
-	const submitBtn = form.querySelector<HTMLButtonElement>('.order__button')!;
-	const paymentButtons = form.querySelectorAll<HTMLButtonElement>(
-		'.order__buttons button'
-	);
-	const addressInput = form.querySelector<HTMLInputElement>(
-		'input[name="address"]'
-	)!;
-	const errorsEl = form.querySelector<HTMLSpanElement>('.form__errors')!;
+  const formEl = document.querySelector<HTMLFormElement>('form[name="order"]'); // ищем уже в DOM
+  if (!formEl) return;
 
-	const update = () => {
-	const errors: string[] = [];
-
-	// Проверяем адрес только если выбрана оплата
-	if (appData.order.getData().payment) {
-		if (!addressInput.value.trim() || addressInput.value.trim().length < 5) {
-			errors.push('Необходимо указать адрес');
-		}
-	}
-
-	// Показываем ошибки (до выбора оплаты будет пусто)
-	errorsEl.textContent = errors.join('; ');
-
-	// Кнопка активна, если нет ошибок и выбрана оплата
-	submitBtn.disabled = errors.length > 0 || !appData.order.getData().payment;
-};
-
-	// Выбор способа оплаты
-	paymentButtons.forEach((btn) => {
-		btn.addEventListener('click', () => {
-			paymentButtons.forEach((b) => b.classList.remove('button_alt-active'));
-			btn.classList.add('button_alt-active');
-
-			const value = btn.name === 'card' ? 'online' : btn.name;
-			appData.setOrderField('payment', value as 'online' | 'cash');
-
-			update();
-		});
-	});
-
-	// Ввод адреса
-	addressInput.addEventListener('input', () => {
-		appData.setOrderField('address', addressInput.value);
-		update();
-	});
-
-	form.addEventListener('submit', (e) => {
-		e.preventDefault();
-		update();
-		if (!submitBtn.disabled) events.emit('checkout:step2');
-	});
-
-	update(); // начальное состояние
-};
+  new DeliveryForm(formEl, events, appData.order); // теперь кнопки реально есть
+});
 
 // --- Шаг 2: email и телефон ---
 const setupStep2 = () => {
 	const form = document.querySelector<HTMLFormElement>('form[name="contacts"]');
 	if (!form) return;
 
-	const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-	const emailInput = form.querySelector<HTMLInputElement>('input[name="email"]')!;
-	const phoneInput = form.querySelector<HTMLInputElement>('input[name="phone"]')!;
+	const submitBtn = form.querySelector<HTMLButtonElement>(
+		'button[type="submit"]'
+	)!;
+	const emailInput = form.querySelector<HTMLInputElement>(
+		'input[name="email"]'
+	)!;
+	const phoneInput = form.querySelector<HTMLInputElement>(
+		'input[name="phone"]'
+	)!;
 
 	const validateStep2 = () => {
 		const emailValid = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(emailInput.value);
@@ -217,12 +178,6 @@ const setupStep2 = () => {
 	validateStep2(); // начальная проверка
 };
 
-// --- Слушатели событий ---
-events.on('checkout:step1', () => {
-	modal.setData({ content: templates.order() });
-	setupStep1();
-});
-
 events.on('checkout:step2', () => {
 	modal.setData({ content: templates.contacts() });
 	setupStep2();
@@ -230,32 +185,36 @@ events.on('checkout:step2', () => {
 
 // --- Отправка заказа ---
 events.on('checkout:step2Completed', () => {
-  const itemsIds = basketModel.getItems().map(item => item.id);
-  const totalPrice = basketModel.getTotalPrice(); // <--- берём сумму
+	const itemsIds = basketModel.getItems().map((item) => item.id);
+	const totalPrice = basketModel.getTotalPrice(); // <--- берём сумму
 
-  try {
-    const apiOrder = {
-      ...appData.order.toApiOrder(itemsIds),
-      total: totalPrice, // <--- добавляем total
-    };
+	try {
+		const apiOrder = {
+			...appData.order.toApiOrder(itemsIds),
+			total: totalPrice, // <--- добавляем total
+		};
 
+		api.createOrder(apiOrder).then((result) => {
+			const successEl = templates.success();
+			const descriptionEl = successEl.querySelector<HTMLParagraphElement>(
+				'.order-success__description'
+			);
+			if (descriptionEl)
+				descriptionEl.textContent = `Списано ${totalPrice} синапсов`;
 
-    api.createOrder(apiOrder).then(result => {
-      const successEl = templates.success();
-      const descriptionEl = successEl.querySelector<HTMLParagraphElement>('.order-success__description');
-      if (descriptionEl) descriptionEl.textContent = `Списано ${totalPrice} синапсов`;
+			const closeBtn = successEl.querySelector<HTMLButtonElement>(
+				'.order-success__close'
+			);
+			if (closeBtn) closeBtn.addEventListener('click', () => modal.close());
 
-      const closeBtn = successEl.querySelector<HTMLButtonElement>('.order-success__close');
-      if (closeBtn) closeBtn.addEventListener('click', () => modal.close());
+			modal.setData({ content: successEl });
 
-      modal.setData({ content: successEl });
-
-      appData.clearBasket();
-    });
-  } catch (err) {
-    console.error(err);
-    alert('Ошибка при отправке заказа');
-  }
+			appData.clearBasket();
+		});
+	} catch (err) {
+		console.error(err);
+		alert('Ошибка при отправке заказа');
+	}
 });
 
 // Отображение ошибок на странице
