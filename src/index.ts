@@ -123,69 +123,24 @@ events.on('checkout:step1Completed', () => {
 });
 
 // --- Шаг 2: email и телефон ---
-const setupStep2 = () => {
-	const form = document.querySelector<HTMLFormElement>('form[name="contacts"]');
-	if (!form) return;
-
-	const submitBtn = form.querySelector<HTMLButtonElement>(
-		'button[type="submit"]'
-	)!;
-	const emailInput = form.querySelector<HTMLInputElement>(
-		'input[name="email"]'
-	)!;
-	const phoneInput = form.querySelector<HTMLInputElement>(
-		'input[name="phone"]'
-	)!;
-
-	const validateStep2 = () => {
-		const emailValid = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(emailInput.value);
-		const phoneDigits = phoneInput.value.replace(/\D/g, '');
-		const phoneValid = phoneDigits.length === 11;
-
-		// Кнопка активна только если оба поля валидны
-		submitBtn.disabled = !(emailValid && phoneValid);
-	};
-
-	// Форматирование телефона во время ввода
-	phoneInput.addEventListener('input', () => {
-		let value = phoneInput.value.replace(/\D/g, '');
-		if (value.startsWith('7')) value = value.slice(1);
-
-		let formatted = '+7';
-		if (value.length > 0) formatted += ' (' + value.substring(0, 3);
-		if (value.length >= 4) formatted += ') ' + value.substring(3, 6);
-		if (value.length >= 7) formatted += ' ' + value.substring(6, 8);
-		if (value.length >= 9) formatted += ' ' + value.substring(8, 10);
-
-		phoneInput.value = formatted;
-
-		validateStep2();
-	});
-
-	emailInput.addEventListener('input', validateStep2);
-
-	form.addEventListener('submit', (e) => {
-		e.preventDefault();
-		validateStep2();
-
-		if (!submitBtn.disabled) {
-			// Сохраняем данные в OrderModel
-			appData.order.setData({
-				email: emailInput.value.trim(),
-				phone: phoneInput.value.replace(/\D/g, '').padStart(11, '7'), // формат +7XXXXXXXXXX
-			});
-
-			events.emit('checkout:step2Completed');
-		}
-	});
-
-	validateStep2(); // начальная проверка
-};
-
 events.on('checkout:step2', () => {
-	modal.setData({ content: templates.contacts() });
-	setupStep2();
+  // создаём форму через шаблон
+  const formElement = templates.contacts();
+  // вставляем форму в модалку
+  modal.setData({ content: formElement });
+
+  // ищем форму в DOM
+  const formEl = document.querySelector<HTMLFormElement>('form[name="contacts"]');
+  if (!formEl) return;
+
+  // создаём экземпляр ContactForm
+  new ContactForm(formEl, events, appData.order);
 });
+
+// events.on('checkout:step2', () => {
+// 	modal.setData({ content: templates.contacts() });
+// 	setupStep2();
+// });
 
 events.on('checkout:step2Completed', () => {
 	const itemsIds = basketModel.getItems().map((item) => item.id);
@@ -194,7 +149,6 @@ events.on('checkout:step2Completed', () => {
 	try {
 		const apiOrder = appData.order.toApiOrder(itemsIds, totalPrice);
 
-		// 🔍 вот сюда добавь
 		console.log('Готовый заказ для API:', apiOrder);
 
 		api.createOrder(apiOrder).then((result) => {
