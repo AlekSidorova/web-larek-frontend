@@ -118,14 +118,21 @@ const setupStep1 = () => {
 	const errorsEl = form.querySelector<HTMLSpanElement>('.form__errors')!;
 
 	const update = () => {
-		const errors: string[] = [];
-		if (!addressInput.value.trim() || addressInput.value.trim().length < 5)
-			errors.push('Введите корректный адрес');
-		if (!appData.order.getData().payment) errors.push('');
+	const errors: string[] = [];
 
-		errorsEl.textContent = errors.join('; ');
-		submitBtn.disabled = errors.length > 0;
-	};
+	// Проверяем адрес только если выбрана оплата
+	if (appData.order.getData().payment) {
+		if (!addressInput.value.trim() || addressInput.value.trim().length < 5) {
+			errors.push('Необходимо указать адрес');
+		}
+	}
+
+	// Показываем ошибки (до выбора оплаты будет пусто)
+	errorsEl.textContent = errors.join('; ');
+
+	// Кнопка активна, если нет ошибок и выбрана оплата
+	submitBtn.disabled = errors.length > 0 || !appData.order.getData().payment;
+};
 
 	// Выбор способа оплаты
 	paymentButtons.forEach((btn) => {
@@ -160,33 +167,17 @@ const setupStep2 = () => {
 	const form = document.querySelector<HTMLFormElement>('form[name="contacts"]');
 	if (!form) return;
 
-	const submitBtn = form.querySelector<HTMLButtonElement>(
-		'button[type="submit"]'
-	)!;
-	const emailInput = form.querySelector<HTMLInputElement>(
-		'input[name="email"]'
-	)!;
-	const phoneInput = form.querySelector<HTMLInputElement>(
-		'input[name="phone"]'
-	)!;
-	const errorsEl = form.querySelector<HTMLSpanElement>('.form__errors')!;
+	const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+	const emailInput = form.querySelector<HTMLInputElement>('input[name="email"]')!;
+	const phoneInput = form.querySelector<HTMLInputElement>('input[name="phone"]')!;
 
-	const updateStep2 = () => {
-		const errors: string[] = [];
-
-		// Email
-		if (
-			!emailInput.value ||
-			!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(emailInput.value)
-		)
-			errors.push('');
-
-		// Телефон (должен быть полностью введён в формате +7 (XXX) XXX XX XX)
+	const validateStep2 = () => {
+		const emailValid = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(emailInput.value);
 		const phoneDigits = phoneInput.value.replace(/\D/g, '');
-		if (phoneDigits.length !== 11) errors.push('');
+		const phoneValid = phoneDigits.length === 11;
 
-		errorsEl.textContent = errors.join('; ');
-		submitBtn.disabled = errors.length > 0;
+		// Кнопка активна только если оба поля валидны
+		submitBtn.disabled = !(emailValid && phoneValid);
 	};
 
 	// Форматирование телефона во время ввода
@@ -194,37 +185,36 @@ const setupStep2 = () => {
 		let value = phoneInput.value.replace(/\D/g, '');
 		if (value.startsWith('7')) value = value.slice(1);
 
-		let formatted = '+7 ';
-		if (value.length > 0) formatted += '(' + value.substring(0, 3);
+		let formatted = '+7';
+		if (value.length > 0) formatted += ' (' + value.substring(0, 3);
 		if (value.length >= 4) formatted += ') ' + value.substring(3, 6);
 		if (value.length >= 7) formatted += ' ' + value.substring(6, 8);
 		if (value.length >= 9) formatted += ' ' + value.substring(8, 10);
 
 		phoneInput.value = formatted;
 
-		updateStep2();
+		validateStep2();
 	});
 
-	emailInput.addEventListener('input', updateStep2);
+	emailInput.addEventListener('input', validateStep2);
 
 	form.addEventListener('submit', (e) => {
-	e.preventDefault();
-	updateStep2();
+		e.preventDefault();
+		validateStep2();
 
-	if (!submitBtn.disabled) {
-		// Принудительно записываем email и phone в OrderModel
-		appData.order.setData({
-			email: emailInput.value.trim(),
-			phone: phoneInput.value.replace(/\D/g, '').padStart(11, '7'), // формат +7XXXXXXXXXX
-		});
+		if (!submitBtn.disabled) {
+			// Сохраняем данные в OrderModel
+			appData.order.setData({
+				email: emailInput.value.trim(),
+				phone: phoneInput.value.replace(/\D/g, '').padStart(11, '7'), // формат +7XXXXXXXXXX
+			});
 
-		console.log('Данные заказа перед API:', appData.order.getData());
+			console.log('Данные заказа перед API:', appData.order.getData());
+			events.emit('checkout:step2Completed');
+		}
+	});
 
-		events.emit('checkout:step2Completed');
-	}
-});
-
-	updateStep2(); // начальное состояние
+	validateStep2(); // начальная проверка
 };
 
 // --- Слушатели событий ---
@@ -249,7 +239,6 @@ events.on('checkout:step2Completed', () => {
       total: totalPrice, // <--- добавляем total
     };
 
-    console.log('Данные заказа перед API:', apiOrder);
 
     api.createOrder(apiOrder).then(result => {
       const successEl = templates.success();
@@ -268,16 +257,6 @@ events.on('checkout:step2Completed', () => {
     alert('Ошибка при отправке заказа');
   }
 });
-
-// Валидация формы заказа при изменении полей
-events.on(
-	/^order\..*:change/,
-	(data: { field: keyof IOrderForm; value: string }) => {
-		appData.setOrderField(data.field, data.value);
-		order.validate();
-		events.emit('formErrors:change', { message: order.getErrorMessage() });
-	}
-);
 
 // Отображение ошибок на странице
 events.on('formErrors:change', (data: { message: string }) => {

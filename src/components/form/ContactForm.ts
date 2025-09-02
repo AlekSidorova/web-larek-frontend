@@ -54,24 +54,24 @@ export class ContactForm {
   }
 
   private validate() {
-    this.order.validate(); // проверка email и телефона
+    this.order.validate(); 
 
     const data = this.order.getData();
-    const errors: string[] = [];
+    let hasError = false;
 
     if (!data.email || this.order.getErrors().email) {
-      errors.push(this.order.getErrors().email || 'Введите корректный email');
+      hasError = true;
     }
 
     if (!data.phone || this.order.getErrors().phone) {
-      errors.push(this.order.getErrors().phone || 'Введите корректный телефон');
+      hasError = true;
     }
 
     // Вывод ошибок в одну строку
-    this.errorsEl.textContent = errors.join('; ');
+    this.errorsEl.textContent = '';
 
     // Кнопка подтверждения активна только если ошибок нет
-    this.submitButton.disabled = errors.length > 0;
+    this.submitButton.disabled = hasError;
   }
 
   private handleSubmit() {
