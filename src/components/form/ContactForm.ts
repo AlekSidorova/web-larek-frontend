@@ -1,11 +1,12 @@
 import { Form } from './Form';
 import { appData, events } from '../../index';
 import { OrderModel } from '../models/OrderModel';
+import { IEvents } from '../base/events';
 
 export class ContactForm extends Form {
   private order: OrderModel;
 
-  constructor(formEl: HTMLFormElement, events: any, order: OrderModel) {
+  constructor(formEl: HTMLFormElement, events: IEvents, order: OrderModel) {
     super(formEl, events);
     this.order = order;
 

@@ -104,6 +104,7 @@ events.on('basket:update', () => {
 	page.updateCartCounter(basketModel.getItems().length);
 });
 
+
 // --- Оформление заказа ---
 
 // --- Шаг 1: выбор оплаты и адрес ---
@@ -115,6 +116,10 @@ events.on('checkout:step1', () => {
   if (!formEl) return;
 
   new DeliveryForm(formEl, events, appData.order); // теперь кнопки реально есть
+});
+
+events.on('checkout:step1Completed', () => {
+  events.emit('checkout:step2'); // вызывает существующий код для шага 2
 });
 
 // --- Шаг 2: email и телефон ---
