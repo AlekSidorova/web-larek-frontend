@@ -1,93 +1,59 @@
-import { appData, events } from "../../index";
-import { OrderModel } from "../models/OrderModel";
-import { ensureElement } from "../../utils/utils";
+import { Form } from './Form';
+import { appData, events } from '../../index';
+import { OrderModel } from '../models/OrderModel';
 
-export class ContactForm {
-  private formEl: HTMLFormElement;
-  private submitButton: HTMLButtonElement;
-  private emailInput: HTMLInputElement;
-  private phoneInput: HTMLInputElement;
-  private errorsEl: HTMLElement;
+export class ContactForm extends Form {
   private order: OrderModel;
 
-  constructor(container: HTMLElement, order: OrderModel) {
+  constructor(formEl: HTMLFormElement, events: any, order: OrderModel) {
+    super(formEl, events);
     this.order = order;
 
-    // Получаем элементы формы
-    this.formEl = ensureElement<HTMLFormElement>('form', container);
-    this.submitButton = ensureElement<HTMLButtonElement>('.order__button', container);
-    this.errorsEl = ensureElement<HTMLElement>('.form__errors', container);
-    this.emailInput = ensureElement<HTMLInputElement>('input[name="email"]', container);
-    this.phoneInput = ensureElement<HTMLInputElement>('input[name="phone"]', container);
-
-    this._initListeners();
-    this.validate(); // начальная проверка
+    // начальная проверка
+    this.validate();
   }
 
-  private _initListeners() {
-    // Поле email
-    this.emailInput.addEventListener('input', () => {
-      appData.setOrderField('email', this.emailInput.value);
-      this.validate();
-    });
-
-    // Поле телефона с форматированием
-    this.phoneInput.addEventListener('input', () => {
-      let digits = this.phoneInput.value.replace(/\D/g, '');
-
-      // Оставляем только 10 последних цифр
+  protected onFieldChange(field: string, value: string) {
+    if (field === 'email') {
+      appData.setOrderField('email', value);
+    } else if (field === 'phone') {
+      // Форматируем телефон
+      let digits = value.replace(/\D/g, '');
       if (digits.length > 10) digits = digits.slice(-10);
-
-      // Формируем номер в формате +7XXXXXXXXXX
       const formatted = '+7' + digits;
-      this.phoneInput.value = formatted;
 
+      this.formEl.querySelector<HTMLInputElement>(
+        'input[name="phone"]'
+      )!.value = formatted;
       appData.setOrderField('phone', formatted);
-      this.validate();
-    });
+    }
 
-    // Submit формы
-    this.formEl.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.handleSubmit();
-    });
+    this.validate();
   }
 
   private validate() {
-    this.order.validate(); 
-
+    this.order.validate();
     const data = this.order.getData();
-    let hasError = false;
+    const hasError =
+      !data.email ||
+      this.order.getErrors().email ||
+      !data.phone ||
+      this.order.getErrors().phone;
 
-    if (!data.email || this.order.getErrors().email) {
-      hasError = true;
-    }
-
-    if (!data.phone || this.order.getErrors().phone) {
-      hasError = true;
-    }
-
-    // Вывод ошибок в одну строку
-    this.errorsEl.textContent = '';
-
-    // Кнопка подтверждения активна только если ошибок нет
-    this.submitButton.disabled = hasError;
+    this.setValid(!hasError);
   }
 
-  private handleSubmit() {
-  // Принудительно обновляем данные в OrderModel
-  this.order.setData({
-    email: this.emailInput.value.trim(),
-    phone: this.phoneInput.value.trim()
-  });
+  protected handleSubmit() {
+    this.order.setData({
+      email: this.formEl
+        .querySelector<HTMLInputElement>('input[name="email"]')!
+        .value.trim(),
+      phone: this.formEl
+        .querySelector<HTMLInputElement>('input[name="phone"]')!
+        .value.trim(),
+    });
 
-  // Лог для проверки
-  console.log('Данные заказа перед API:', appData.order.getData());
-
-  if (!this.errorsEl.textContent) {
+    console.log('Данные заказа перед API:', appData.order.getData());
     events.emit('checkout:step2Completed');
-  } else {
-    events.emit('form:validationError', { message: this.errorsEl.textContent });
   }
-}
 }
