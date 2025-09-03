@@ -17,35 +17,36 @@ export class CardModal extends CardsData {
     this.fillBase(template, product);
 
     const btn = ensureElement<HTMLButtonElement>('.card__button', template);
+    btn.disabled = false;
 
-    // Начальное состояние кнопки
-    if (!product.price) {
-      btn.textContent = 'Недоступно';
-      btn.disabled = true;
-    } else if (basketModel.isInCart(product.id)) {
-      btn.textContent = 'Удалить из корзины';
-    } else {
-      btn.textContent = 'В корзину';
-    }
-
-    // Навешиваем клик
     const newBtn = btn.cloneNode(true) as HTMLButtonElement;
     btn.replaceWith(newBtn);
+
     newBtn.addEventListener('click', () => {
       if (!product.price) return;
 
       if (basketModel.isInCart(product.id)) {
         basketModel.removeItem(product.id);
-        newBtn.textContent = 'В корзину';
+        this.setText(newBtn, 'В корзину');
       } else {
         basketModel.addItem(product);
-        newBtn.textContent = 'Удалить из корзины';
+        this.setText(newBtn, 'Удалить из корзины');
       }
 
       this.events.emit('basket:update');
     });
 
-    // Картинка с margin 0
+    // Начальное состояние кнопки
+    if (!product.price) {
+      this.setText(newBtn, 'Недоступно');
+      newBtn.disabled = true;
+    } else if (basketModel.isInCart(product.id)) {
+      this.setText(newBtn, 'Удалить из корзины');
+    } else {
+      this.setText(newBtn, 'В корзину');
+    }
+
+    // Картинка без margin
     const imageEl = ensureElement<HTMLImageElement>('.card__image', template);
     imageEl.style.margin = '0';
 

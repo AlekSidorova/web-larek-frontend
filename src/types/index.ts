@@ -1,4 +1,4 @@
-//карточка
+// --- Карточка ---
 export interface ICard { 
   id: string;
   image: string;
@@ -8,70 +8,40 @@ export interface ICard {
   description?: string;
 }
 
-//управление списком карточек (каталог)
-export interface ICardData { 
-  cards: ICard[];
-  preview: string | null; 
-  openCard(card: ICard): void;
-  closeCard(card: ICard): void;
-  getCard(cardID: string): ICard;
-  buyCard(card: ICard): void; 
-  deleteCard(cardID: string): void; 
-} 
-
-// интерфейс для данных корзины
-export interface IBasket { 
-  id: string;
-  total: number | null;
-  items: ICard[]; 
-  addItem(card: ICard): void; 
-  removeItem(cardId: string): void; 
-  clear(): void; 
-  getItems(): ICard[]; 
-}
-
-export interface IValidationForm {
-  buttonError: boolean; //не выбрана кнопка
-  addressError: string; //не введен адрес доставки
-  emailError: string; //неверный email
-  phoneError: string; //неверный номер телефона
-  checkValidation(): boolean; // Метод для проверки всех полей
-}
-
-// данные заказа (то, что мы отправляем на сервер)
+// --- Заказ ---
 export interface IOrder {
-  items: string[];              // id товаров из корзины
-  address: string;              // адрес доставки
-  email: string;                // почта
-  phone: string;                // телефон
-  payment: 'online' | 'cash';   // способ оплаты (обязательно)
-  total: number;                // итоговая сумма (обязательно для API)
+  items: string[];              // id товаров
+  address: string;              
+  email: string;                
+  phone: string;                
+  payment: 'online' | 'cash';   
+  total: number;                
 }
 
-//ответ от сервера после создания заказа
+// Ответ сервера после создания заказа
 export interface IOrderResult {
-  id: string; //id заказа на сервере
-  total: number; //итоговая сумма
+  id: string;
+  total: number;
 }
 
-// интерфейс для модели внутри приложения
+// Модель заказа внутри приложения
 export interface IOrderModel {
   setData(inputData: Record<string, string>): void;
   getData(): Record<string, string>;
   getErrors(): Record<string, string>;
   isValid(): boolean;
+  toApiOrder?(items: string[], total: number): IOrder; // метод для API
 }
 
+// Интерфейс для формы в чекауте
 export interface IOrderForm {
-  payment: 'online' | 'cash'; // обязательное для API
+  payment: 'online' | 'cash';
   address: string;
   email: string;
   phone: string;
-  valid: boolean;
-  errors: string[];
 }
 
-//тип модалки
+// --- Модалки ---
 export type ModalContentType = 'product' | 'basket' | 'checkoutStep1' | 'checkoutStep2';
 
 export interface IModalData {
@@ -79,23 +49,8 @@ export interface IModalData {
   card?: ICard;
 }
 
-//интерфейс для типа модалки
-export interface IModalUpdatePayload {
-  type: ModalContentType;
-  card: ICard | null;
-}
-
-export interface ICardOpenPayload {
-  card: ICard;
-}
-
-// создаем интерфейс для категорий
+// --- Категории ---
 export interface ICategory {
-    name: string; // имя категории
-    className: string; // соответствующий класс для стиля
-}
-
-export interface IFormField {
   name: string;
-  element: HTMLInputElement | HTMLButtonElement;
+  className: string;
 }

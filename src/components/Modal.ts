@@ -4,79 +4,66 @@ import { IEvents } from './base/events';
 import { ensureElement, cloneTemplate } from '../utils/utils';
 
 export class Modal extends Component<IModalData> {
-	private modal: HTMLElement;
-	private contentEl: HTMLElement;
-	private closeBtn: HTMLElement;
-	private events: IEvents;
+  private modal: HTMLElement;
+  private contentEl: HTMLElement;
+  private closeBtn: HTMLElement;
+  private events: IEvents;
 
-	constructor(containerSelector: string, events: IEvents) {
-		const container = ensureElement<HTMLElement>(containerSelector);
-		super(container);
+  constructor(containerSelector: string, events: IEvents) {
+    const container = ensureElement<HTMLElement>(containerSelector);
+    super(container);
 
-		this.events = events;
-		this.modal = container;
-		this.contentEl = ensureElement<HTMLElement>('.modal__content', container);
-		this.closeBtn = ensureElement<HTMLElement>('.modal__close', container);
+    this.events = events;
+    this.modal = container;
+    this.contentEl = ensureElement<HTMLElement>('.modal__content', container);
+    this.closeBtn = ensureElement<HTMLElement>('.modal__close', container);
 
-		this.addEventListeners();
-	}
+    this.addEventListeners();
+  }
 
-	// Сеттер для контента
-	set content(value: HTMLElement | ModalContentType) {
-		const node = typeof value === 'string' ? cloneTemplate(value) : value;
-		this.contentEl.replaceChildren(node);
-	}
+  set content(value: HTMLElement | ModalContentType) {
+    const node = typeof value === 'string' ? cloneTemplate(value) : value;
+    this.contentEl.replaceChildren(node);
+  }
 
-	// Абстрактный метод Component
-	setData(data: IModalData): void {
-		this.content = data.content;
-		this.open();
-		if (data.card) {
-			this.events.emit('modal:update', { type: 'product', card: data.card });
-		} else {
-			this.events.emit('modal:update', { type: 'basket', card: null });
-		}
-	}
+  setData(data: IModalData): void {
+    this.content = data.content;
+    this.open();
 
-	// Открытие
-	open(): void {
-		this.modal.classList.add('modal_active');
-		document.body.classList.add('_locked');
-		this.events.emit('modal:open');
-	}
+    this.events.emit('modal:update', {
+      type: data.card ? 'product' : 'basket',
+      card: data.card ?? null
+    });
+  }
 
-	// Закрытие
-	close(): void {
-		this.modal.classList.remove('modal_active');
-		document.body.classList.remove('_locked');
+  open(): void {
+    this.toggleClass(this.modal, 'modal_active', true);
+    document.body.classList.add('_locked');
+    this.events.emit('modal:open');
+  }
 
-		this.contentEl.replaceChildren(); // очищаем контент
-		this.events.emit('modal:close');
+  close(): void {
+    this.toggleClass(this.modal, 'modal_active', false);
+    document.body.classList.remove('_locked');
 
-		// Очищаем ошибки
-		const errorEl = this.modal.querySelector<HTMLElement>('.form__errors');
-		if (errorEl) {
-			errorEl.textContent = ''; // Очищаем ошибки
-		}
-	}
+    this.contentEl.replaceChildren();
+    this.events.emit('modal:close');
 
-	private addEventListeners(): void {
-		// крестик
-		this.closeBtn.addEventListener('click', () => this.close());
+    const errorEl = this.modal.querySelector<HTMLElement>('.form__errors');
+    if (errorEl) this.setText(errorEl, '');
+  }
 
-		// клик вне контента
-		this.modal.addEventListener('click', () => this.close());
+  private addEventListeners(): void {
+    this.closeBtn.addEventListener('click', () => this.close());
+    this.modal.addEventListener('click', () => this.close());
+    this.contentEl.addEventListener('click', (e) => e.stopPropagation());
 
-		// клик по контенту не закрывает модалку
-		this.contentEl.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.close();
+    });
+  }
 
-		// Escape
-		document.addEventListener('keydown', (e) => {
-			if (e.key === 'Escape') this.close();
-		});
-	}
-
-	isActive(): boolean {
-		return this.modal.classList.contains('modal_active');
-	}
+  isActive(): boolean {
+    return this.modal.classList.contains('modal_active');
+  }
 }

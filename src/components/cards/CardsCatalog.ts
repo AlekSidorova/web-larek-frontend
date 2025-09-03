@@ -15,7 +15,6 @@ export class CardsCatalog extends CardsData {
   setData(data: ICard): void {
     this.fillBase(this.cardElement, data);
 
-    // Клик по карточке открывает модалку
     this.cardElement.addEventListener('click', () => {
       events.emit('card:open', { card: data });
     });
