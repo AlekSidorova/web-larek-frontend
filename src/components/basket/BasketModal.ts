@@ -17,14 +17,9 @@ export class BasketModal extends Component<unknown> {
 		const totalEl = ensureElement<HTMLElement>('.basket__price', template);
 		const btn = ensureElement<HTMLButtonElement>('.basket__button', template);
 
-		//переход к шагу оформления
-		btn.addEventListener('click', () => {
-			if (basketModel.getItems().length === 0) return; // защита от пустой корзины
-			this.events.emit('checkout:step1'); // открываем первый шаг чекаута
-		});
-
 		const items = basketModel.getItems();
 
+		// Пустая корзина
 		if (items.length === 0) {
 			listEl.innerHTML = '<li class="basket__empty">Корзина пуста</li>';
 			btn.disabled = true;
@@ -36,15 +31,13 @@ export class BasketModal extends Component<unknown> {
 					li.className = 'basket__item card card_compact';
 
 					li.innerHTML = `
-            <span class="basket__item-index">${idx + 1}</span>
-            <span class="card__title">${item.title}</span>
-            <span class="card__price">${item.price} синапсов</span>
-            <button class="basket__item-delete" aria-label="удалить"></button>
-          `;
+						<span class="basket__item-index">${idx + 1}</span>
+						<span class="card__title">${item.title}</span>
+						<span class="card__price">${item.price} синапсов</span>
+						<button class="basket__item-delete" aria-label="удалить"></button>
+					`;
 
-					const deleteBtn = li.querySelector(
-						'.basket__item-delete'
-					) as HTMLButtonElement;
+					const deleteBtn = li.querySelector<HTMLButtonElement>('.basket__item-delete')!;
 					deleteBtn.addEventListener('click', () => {
 						basketModel.removeItem(item.id);
 						this.setData(); // обновляем корзину
@@ -58,6 +51,12 @@ export class BasketModal extends Component<unknown> {
 			btn.disabled = false;
 			totalEl.textContent = basketModel.getTotalPrice() + ' синапсов';
 		}
+
+		// Кнопка "Оформить заказ"
+		btn.addEventListener('click', () => {
+			if (basketModel.getItems().length === 0) return;
+			this.events.emit('checkout:step1');
+		});
 
 		this.container.replaceChildren(template);
 	}
