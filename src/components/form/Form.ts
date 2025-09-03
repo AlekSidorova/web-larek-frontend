@@ -3,7 +3,7 @@ import { ensureElement } from '../../utils/utils';
 
 export abstract class Form {
 	protected formEl: HTMLFormElement;
-	protected inputs: NodeListOf<HTMLInputElement | HTMLTextAreaElement>;
+	protected inputs: NodeListOf<HTMLInputElement | HTMLTextAreaElement>; //инпут или текстареа в форме
 	protected submitButton: HTMLButtonElement;
 	protected errors: Partial<Record<string, HTMLElement>> = {};
 	protected events: IEvents;
@@ -24,12 +24,14 @@ export abstract class Form {
 
 	private initErrors(): void {
 		this.inputs.forEach((input) => {
-			const errorEl = this.formEl.querySelector<HTMLElement>(`.error-${input.name}`);
+			const errorEl = this.formEl.querySelector<HTMLElement>(
+				`.error-${input.name}`
+			);
 			if (errorEl) this.errors[input.name] = errorEl;
 		});
 	}
 
-	/** Автоматически навешиваем input-слушатели для всех полей */
+	//навешиваем инпут слушатели для всех полей
 	private initListeners(): void {
 		this.inputs.forEach((input) => {
 			input.addEventListener('input', () => {
@@ -57,11 +59,16 @@ export abstract class Form {
 		if (el) el.textContent = '';
 	}
 
-	protected setError(data: { field: string; value: string; validInformation: string }): void {
-		if (data.validInformation) this.showInputError(data.field, data.validInformation);
+	protected setError(data: {
+		field: string;
+		value: string;
+		validInformation: string;
+	}): void {
+		if (data.validInformation)
+			this.showInputError(data.field, data.validInformation);
 		else this.hideInputError(data.field);
 	}
 
-	protected abstract handleSubmit(): void;
-	protected abstract onFieldChange(field: string, value: string): void;
+	protected abstract handleSubmit(): void; //обработка отправки формы
+	protected abstract onFieldChange(field: string, value: string): void; //обработка изменения поля
 }

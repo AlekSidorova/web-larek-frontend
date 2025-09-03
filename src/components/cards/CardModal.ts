@@ -12,10 +12,12 @@ export class CardModal extends CardsData {
     this.events = events;
   }
 
+  //принимает объект продукта
   setData(product: ICard): void {
-    const template = cloneTemplate('#card-preview');
-    this.fillBase(template, product);
+    const template = cloneTemplate('#card-preview'); //клонируем шаблон
+    this.fillBase(template, product); //заполняем шаблон данными продукта
 
+    //клонируем кнопки и заменяем (чтобы не было висящих обработчиков)
     const btn = ensureElement<HTMLButtonElement>('.card__button', template);
     btn.disabled = false;
 
@@ -23,7 +25,7 @@ export class CardModal extends CardsData {
     btn.replaceWith(newBtn);
 
     newBtn.addEventListener('click', () => {
-      if (!product.price) return;
+      if (!product.price) return; //проверяет цену
 
       if (basketModel.isInCart(product.id)) {
         basketModel.removeItem(product.id);
@@ -33,10 +35,10 @@ export class CardModal extends CardsData {
         this.setText(newBtn, 'Удалить из корзины');
       }
 
-      this.events.emit('basket:update');
+      this.events.emit('basket:update'); //оповещаем другие части приложения об изменениях корзины
     });
 
-    // Начальное состояние кнопки
+    //установка текста кнопки
     if (!product.price) {
       this.setText(newBtn, 'Недоступно');
       newBtn.disabled = true;
@@ -46,7 +48,7 @@ export class CardModal extends CardsData {
       this.setText(newBtn, 'В корзину');
     }
 
-    // Картинка без margin
+    //картинка без margin (как в макете)
     const imageEl = ensureElement<HTMLImageElement>('.card__image', template);
     imageEl.style.margin = '0';
 

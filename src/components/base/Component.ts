@@ -6,52 +6,54 @@ export abstract class Component<T = unknown> {
     this.container = container;
   }
 
-  /** Вернуть корневой DOM-элемент */
+  //возвращает корневой элемент
   render(): HTMLElement {
     return this.container;
   }
 
-  /** Показать элемент */
+  //показать элемент
   show(): void {
     this.container.classList.add('modal_active');
   }
 
-  /** Скрыть элемент */
+  //скрыть элемент
   hide(): void {
     this.container.classList.remove('modal_active');
   }
 
-  /** Абстрактный метод для обновления данных в наследниках */
+  //абстрактный метод для обновления данных в наследниках
   abstract setData(data: T): void;
 
-  /** Переключить класс у элемента */
-  protected toggleClass(element: HTMLElement, className: string, force?: boolean) {
+  //переключить класс у элемента
+  protected toggleClass(
+    element: HTMLElement,
+    className: string,
+    force?: boolean
+  ) {
     element.classList.toggle(className, force);
   }
 
-  /** Установить текстовое содержимое */
+  //установить текстовое содержимое
   protected setText(element: HTMLElement, value: unknown) {
     if (element) element.textContent = String(value);
   }
 
-  /** Заблокировать/разблокировать элемент */
+  //заблокироват/разблокировать элемент
   protected setDisabled(element: HTMLElement, state: boolean) {
     if (!element) return;
     if (state) element.setAttribute('disabled', 'disabled');
     else element.removeAttribute('disabled');
   }
 
-  /** Скрыть элемент (display: none) */
   protected setHidden(element: HTMLElement) {
     if (element) element.style.display = 'none';
   }
 
-  /** Показать элемент (удаляем display) */
   protected setVisible(element: HTMLElement) {
     if (element) element.style.removeProperty('display');
   }
 
-  /** Установить изображение и alt */
+  //установить изображение и алт
   protected setImage(element: HTMLImageElement, src: string, alt?: string) {
     if (!element) return;
     element.src = src;

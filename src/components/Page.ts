@@ -1,4 +1,4 @@
-import { IEvents } from './base/events'; // интерфейс для работы с событиями
+import { IEvents } from './base/events';
 import { CardsCatalog } from './cards/CardsCatalog';
 import { ensureElement } from '../utils/utils';
 
@@ -18,23 +18,21 @@ export class Page {
 		this.cartButton = ensureElement<HTMLButtonElement>(cartButtonSelector);
 		this.cartCounter = ensureElement<HTMLElement>(cartCounterSelector);
 		this.events = events;
-
-		// можно добавить слушатели здесь, если будут внутренние события страницы
-		// сейчас клик по корзине обрабатывается в index.ts
 	}
 
-	/** Отрисовывает массив карточек на странице */
+	//отрисовывает массив карточек на странице
 	renderCards(cards: CardsCatalog[]): void {
 		this.container.replaceChildren(...cards.map((c) => c.render()));
 	}
 
-	/** Добавляет карточку на страницу */
+	//добавляет карточку на страницу
 	addCard(card: CardsCatalog): void {
 		this.container.appendChild(card.render());
 	}
 
-	/** Обновляет счётчик корзины */
+	//обновляет счётчик корзины
 	updateCartCounter(count: number): void {
+		//переоразовываем число в строку и устанавливаем
 		this.cartCounter.textContent = String(count);
 	}
 }

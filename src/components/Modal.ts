@@ -23,16 +23,17 @@ export class Modal extends Component<IModalData> {
 
   set content(value: HTMLElement | ModalContentType) {
     const node = typeof value === 'string' ? cloneTemplate(value) : value;
-    this.contentEl.replaceChildren(node);
+    this.contentEl.replaceChildren(node); //содержимое элемента заменяется на новый узел
   }
 
+  //устанавливает данные для модального окна
   setData(data: IModalData): void {
     this.content = data.content;
     this.open();
 
     this.events.emit('modal:update', {
-      type: data.card ? 'product' : 'basket',
-      card: data.card ?? null
+      type: data.card ? 'product' : 'basket', //тип модального окна
+      card: data.card ?? null,
     });
   }
 
@@ -46,11 +47,8 @@ export class Modal extends Component<IModalData> {
     this.toggleClass(this.modal, 'modal_active', false);
     document.body.classList.remove('_locked');
 
-    this.contentEl.replaceChildren();
+    this.contentEl.replaceChildren(); //очищает содержимое
     this.events.emit('modal:close');
-
-    const errorEl = this.modal.querySelector<HTMLElement>('.form__errors');
-    if (errorEl) this.setText(errorEl, '');
   }
 
   private addEventListeners(): void {

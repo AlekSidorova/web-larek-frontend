@@ -1,5 +1,5 @@
 // --- Карточка ---
-export interface ICard { 
+export interface ICard {
   id: string;
   image: string;
   title: string;
@@ -10,21 +10,21 @@ export interface ICard {
 
 // --- Заказ ---
 export interface IOrder {
-  items: string[];              // id товаров
-  address: string;              
-  email: string;                
-  phone: string;                
-  payment: 'online' | 'cash';   
-  total: number;                
+  items: string[]; // id товаров
+  address: string;
+  email: string;
+  phone: string;
+  payment: 'online' | 'cash';
+  total: number;
 }
 
-// Ответ сервера после создания заказа
+//ответ сервера после создания заказа
 export interface IOrderResult {
   id: string;
   total: number;
 }
 
-// Модель заказа внутри приложения
+//модель заказа внутри приложения
 export interface IOrderModel {
   setData(inputData: Record<string, string>): void;
   getData(): Record<string, string>;
@@ -33,7 +33,7 @@ export interface IOrderModel {
   toApiOrder?(items: string[], total: number): IOrder; // метод для API
 }
 
-// Интерфейс для формы в чекауте
+//интерфейс для формы в чекауте
 export interface IOrderForm {
   payment: 'online' | 'cash';
   address: string;
@@ -42,7 +42,11 @@ export interface IOrderForm {
 }
 
 // --- Модалки ---
-export type ModalContentType = 'product' | 'basket' | 'checkoutStep1' | 'checkoutStep2';
+export type ModalContentType =
+  | 'product'
+  | 'basket'
+  | 'checkoutStep1'
+  | 'checkoutStep2';
 
 export interface IModalData {
   content: HTMLElement | ModalContentType;

@@ -11,16 +11,19 @@ export class ContactForm extends Form {
     super(formEl, events);
     this.order = order;
 
-    this.phoneInput = formEl.querySelector<HTMLInputElement>('input[name="phone"]')!;
+    this.phoneInput = formEl.querySelector<HTMLInputElement>(
+      'input[name="phone"]'
+    )!;
 
     this.validate();
   }
 
+  //обрабатывает изменение полей ввода
   protected onFieldChange(field: string, value: string) {
     if (field === 'email') {
-      appData.setOrderField('email', value || '');
+      appData.setOrderField('email', value || ''); //обновляется в appData
     } else if (field === 'phone') {
-      const formatted = this.formatPhone(value);
+      const formatted = this.formatPhone(value); //сначала форматируется потом обновляется
       appData.setOrderField('phone', formatted);
       this.phoneInput.value = formatted;
     }
@@ -37,6 +40,7 @@ export class ContactForm extends Form {
     const email = data.email || '';
     const phone = data.phone || '';
 
+    //форматируем под российские номера
     const emailValid = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email);
     const phoneDigits = phone.replace(/\D/g, '');
     const phoneValid = phoneDigits.length === 11;
@@ -44,9 +48,11 @@ export class ContactForm extends Form {
     this.setValid(emailValid && phoneValid);
   }
 
+  //форматирует номер телефона
   private formatPhone(value: string): string {
     let digits = value.replace(/\D/g, '');
-    if (digits.startsWith('7') || digits.startsWith('8')) digits = digits.slice(1);
+    if (digits.startsWith('7') || digits.startsWith('8'))
+      digits = digits.slice(1);
     digits = digits.substring(0, 10);
 
     let formatted = '+7';

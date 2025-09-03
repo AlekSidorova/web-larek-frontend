@@ -1,12 +1,12 @@
 import { IOrder, IOrderModel } from '../../types/index';
-import { isEmpty } from '../../utils/utils';
+import { isEmpty } from '../../utils/utils'; //проверяет, является ли значение пустым
 
 export class OrderModel implements IOrderModel {
 	private data: Record<string, string> = {};
 	private errors: Record<string, string> = {};
 
 	constructor(initialData: Record<string, string> = {}) {
-		this.setData(initialData);
+		this.setData(initialData); //вызывается для установки начальных данных и валидации
 	}
 
 	setData(inputData: Record<string, string>): void {
@@ -14,35 +14,39 @@ export class OrderModel implements IOrderModel {
 		this.validate();
 	}
 
+	//возвращает копию текущиъ данных заказа (... - не будут изменены)
 	getData(): Record<string, string> {
 		return { ...this.data };
 	}
 
+	//возвращает копию объектов ошибок
 	getErrors(): Record<string, string> {
 		return { ...this.errors };
 	}
 
 	getErrorMessage(): string {
-    return this.errors.address ?? '';
-}
-
-	isValid(): boolean {
-		return Object.keys(this.errors).length === 0;
+		return this.errors.address ?? '';
 	}
 
-	/** Правила валидации — только адрес */
+	isValid(): boolean {
+		return Object.keys(this.errors).length === 0; //если пусто - данные валидны - true
+	}
+
+	//правила валидации
 	private rules: Record<string, (value: string) => string | null> = {
 		address: (value: string) =>
-			isEmpty(value) || value.trim().length < 5 ? 'Необходимо указать адрес' : null,
+			isEmpty(value) || value.trim().length < 5
+				? 'Необходимо указать адрес'
+				: null,
 	};
 
 	validate(): void {
-		this.errors = {};
+		this.errors = {}; //очищает ошибки
 		const addressError = this.rules.address(this.data.address ?? '');
 		if (addressError) this.errors.address = addressError;
 	}
 
-	/** Подготовка данных к API */
+	//подготовка данных к API
 	toApiOrder(items: string[], total: number): IOrder {
 		return {
 			items,
