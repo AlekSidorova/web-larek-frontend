@@ -137,11 +137,6 @@ events.on('checkout:step2', () => {
   new ContactForm(formEl, events, appData.order);
 });
 
-// events.on('checkout:step2', () => {
-// 	modal.setData({ content: templates.contacts() });
-// 	setupStep2();
-// });
-
 events.on('checkout:step2Completed', () => {
 	const itemsIds = basketModel.getItems().map((item) => item.id);
 	const totalPrice = basketModel.getTotalPrice();

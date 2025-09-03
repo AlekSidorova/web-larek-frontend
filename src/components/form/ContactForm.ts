@@ -5,81 +5,34 @@ import { IEvents } from '../base/events';
 
 export class ContactForm extends Form {
 	private order: OrderModel;
-	private submitBtn: HTMLButtonElement;
-	private emailInput: HTMLInputElement;
 	private phoneInput: HTMLInputElement;
 
 	constructor(formEl: HTMLFormElement, events: IEvents, order: OrderModel) {
 		super(formEl, events);
 		this.order = order;
 
-		// Элементы формы
-		this.submitBtn = formEl.querySelector<HTMLButtonElement>(
-			'button[type="submit"]'
-		)!;
-		this.emailInput = formEl.querySelector<HTMLInputElement>(
-			'input[name="email"]'
-		)!;
-		this.phoneInput = formEl.querySelector<HTMLInputElement>(
-			'input[name="phone"]'
-		)!;
+		this.phoneInput = formEl.querySelector<HTMLInputElement>('input[name="phone"]')!;
 
-		// Начальная проверка
+		// Начальная валидация
 		this.validate();
-
-		// Слушатели ввода
-		this.emailInput.addEventListener('input', () => {
-			this.onFieldChange('email', this.emailInput.value);
-		});
-
-		this.phoneInput.addEventListener('input', (e: Event) => {
-			const input = e.target as HTMLInputElement;
-
-			// Берём только цифры
-			let digits = input.value.replace(/\D/g, '');
-
-			// Убираем ведущую 7 или 8 (если пользователь вводит +7...)
-			if (digits.startsWith('7') || digits.startsWith('8')) digits = digits.slice(1);
-
-			// Ограничиваем максимум 10 цифр
-			digits = digits.substring(0, 10);
-
-			// Форматируем красиво
-			let formatted = '+7';
-			if (digits.length > 0) formatted += ' (' + digits.substring(0, 3);
-			if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
-			if (digits.length >= 7) formatted += ' ' + digits.substring(6, 8);
-			if (digits.length >= 9) formatted += ' ' + digits.substring(8, 10);
-
-			// Прописываем в поле
-			input.value = formatted;
-
-			// Сохраняем чистый номер в модель
-			appData.setOrderField('phone', '+7' + digits);
-
-			// Валидация
-			this.validate();
-		});
-
-		// Слушатель сабмита
-		formEl.addEventListener('submit', (e) => {
-			e.preventDefault();
-			this.handleSubmit();
-		});
 	}
 
-	// Обновление данных модели и валидация
 	protected onFieldChange(field: string, value: string) {
-		const strValue = value || '';
-
 		if (field === 'email') {
-			appData.setOrderField('email', strValue);
+			appData.setOrderField('email', value || '');
+		} else if (field === 'phone') {
+			const formatted = this.formatPhone(value);
+			appData.setOrderField('phone', formatted);
+			this.phoneInput.value = formatted;
 		}
 
 		this.validate();
 	}
 
-	// Валидация формы
+	protected handleSubmit() {
+		events.emit('checkout:step2Completed');
+	}
+
 	private validate() {
 		const data = this.order.getData();
 		const email = data.email || '';
@@ -89,12 +42,20 @@ export class ContactForm extends Form {
 		const phoneDigits = phone.replace(/\D/g, '');
 		const phoneValid = phoneDigits.length === 11;
 
-		this.submitBtn.disabled = !(emailValid && phoneValid);
+		this.setValid(emailValid && phoneValid);
 	}
 
-	// Сабмит формы
-	protected handleSubmit() {
-		// Данные уже сохранены в appData
-		events.emit('checkout:step2Completed');
+	private formatPhone(value: string): string {
+		let digits = value.replace(/\D/g, '');
+		if (digits.startsWith('7') || digits.startsWith('8')) digits = digits.slice(1);
+		digits = digits.substring(0, 10);
+
+		let formatted = '+7';
+		if (digits.length > 0) formatted += ' (' + digits.substring(0, 3);
+		if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
+		if (digits.length >= 7) formatted += ' ' + digits.substring(6, 8);
+		if (digits.length >= 9) formatted += ' ' + digits.substring(8, 10);
+
+		return formatted;
 	}
 }
