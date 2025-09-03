@@ -12,7 +12,6 @@ export abstract class CardsData extends Component<ICard> {
     // Категория
     const categoryEl = ensureElement<HTMLElement>('.card__category', template);
     categoryEl.textContent = data.category;
-
     const categoryMatch = categories.find(
       (c: ICategory) => c.name === data.category.toLowerCase()
     );

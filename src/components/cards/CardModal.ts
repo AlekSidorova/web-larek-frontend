@@ -17,12 +17,20 @@ export class CardModal extends CardsData {
     this.fillBase(template, product);
 
     const btn = ensureElement<HTMLButtonElement>('.card__button', template);
-    btn.disabled = false;
 
-    // Удаляем все предыдущие обработчики
+    // Начальное состояние кнопки
+    if (!product.price) {
+      btn.textContent = 'Недоступно';
+      btn.disabled = true;
+    } else if (basketModel.isInCart(product.id)) {
+      btn.textContent = 'Удалить из корзины';
+    } else {
+      btn.textContent = 'В корзину';
+    }
+
+    // Навешиваем клик
     const newBtn = btn.cloneNode(true) as HTMLButtonElement;
     btn.replaceWith(newBtn);
-
     newBtn.addEventListener('click', () => {
       if (!product.price) return;
 
@@ -34,19 +42,8 @@ export class CardModal extends CardsData {
         newBtn.textContent = 'Удалить из корзины';
       }
 
-      // Уведомляем все слушатели об изменении корзины
       this.events.emit('basket:update');
     });
-
-    // Ставим начальное состояние кнопки
-    if (!product.price) {
-      newBtn.textContent = 'Недоступно';
-      newBtn.disabled = true;
-    } else if (basketModel.isInCart(product.id)) {
-      newBtn.textContent = 'Удалить из корзины';
-    } else {
-      newBtn.textContent = 'В корзину';
-    }
 
     // Картинка с margin 0
     const imageEl = ensureElement<HTMLImageElement>('.card__image', template);
