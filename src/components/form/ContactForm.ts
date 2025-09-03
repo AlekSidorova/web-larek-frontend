@@ -1,6 +1,6 @@
 import { Form } from './Form';
 import { appData, events } from '../../index';
-import { OrderModel } from '../models/OrderModel';
+import { OrderModel } from './OrderModel';
 import { IEvents } from '../base/events';
 
 export class ContactForm extends Form {

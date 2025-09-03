@@ -9,8 +9,8 @@ import { Page } from './components/Page';
 import { CardsCatalog } from './components/cards/CardsCatalog';
 import { CardModal } from './components/cards/CardModal';
 import { BasketModal } from './components/basket/BasketModal';
-import { BasketModel } from './components/models/BasketModel';
-import { OrderModel } from './components/models/OrderModel';
+import { BasketModel } from './components/basket/BasketModel';
+import { OrderModel } from './components/form/OrderModel';
 import { DeliveryForm } from './components/form/DeliveryForm';
 import { ContactForm } from './components/form/ContactForm';
 
