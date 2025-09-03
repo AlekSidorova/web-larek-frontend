@@ -1,47 +1,44 @@
-import { ICard } from '../../types/index'
+import { ICard } from '../../types/index';
 
 export class BasketModel {
-  private items: ICard[];
-  private totalPrice: number | null;
+	private items: ICard[] = [];
+	private totalPrice: number = 0;
 
-  constructor(initialItems: ICard[] = []) {
-    this.items = initialItems;
-    this.totalPrice = this.calculateTotal();
-  }
+	constructor(initialItems: ICard[] = []) {
+		this.items = [...initialItems];
+		this.totalPrice = this.calculateTotal();
+	}
 
-  private calculateTotal(): number {
-    return this.items.reduce((sum, item) => sum + (item.price || 0), 0);
-  }
+	private calculateTotal(): number {
+		return this.items.reduce((sum, item) => sum + (item.price || 0), 0);
+	}
 
-  addItem(item: ICard): void {
-    // проверяем, есть ли в нашем списке эта карточка
-    const exists = this.items.some(i => i.id === item.id);
-    //если карточка не существует
-    if(!exists) {
-      this.items.push(item); //добавляем
-      this.totalPrice = this.calculateTotal(); //меняем общую цену
-    }
-  }
+	addItem(item: ICard): void {
+		if (!this.isInCart(item.id)) {
+			this.items.push(item);
+			this.totalPrice = this.calculateTotal();
+		}
+	}
 
-  removeItem(id: string): void {
-    this.items = this.items.filter(item => item.id !== id); //ту что выбрали - отфильтровывем (удаляем)
-    this.totalPrice = this.calculateTotal();
-  }
+	removeItem(id: string): void {
+		this.items = this.items.filter(item => item.id !== id);
+		this.totalPrice = this.calculateTotal();
+	}
 
-  clear(): void {
-    this.items = [];
-    this.totalPrice = 0;
-  }
+	clear(): void {
+		this.items = [];
+		this.totalPrice = 0;
+	}
 
-  getItems(): ICard[] {
-    return [...this.items] //создает новую копию карточек
-  }
+	getItems(): ICard[] {
+		return [...this.items];
+	}
 
-  getTotalPrice(): number {
-    return this.totalPrice
-  }
+	getTotalPrice(): number {
+		return this.totalPrice;
+	}
 
-    isInCart(id: string): boolean {
-    return this.items.some(item => item.id === id);
-  }
+	isInCart(id: string): boolean {
+		return this.items.some(item => item.id === id);
+	}
 }

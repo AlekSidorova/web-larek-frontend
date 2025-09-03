@@ -6,89 +6,51 @@ export class OrderModel implements IOrderModel {
 	private errors: Record<string, string> = {};
 
 	constructor(initialData: Record<string, string> = {}) {
-		//объект с начальными данными
-		this.setData(initialData); //устанавливаем начальные данные и выполняем валидацию
+		this.setData(initialData);
 	}
 
-	//устанавливаем новые данные
 	setData(inputData: Record<string, string>): void {
-		this.data = { ...this.data, ...inputData }; //объединяем (...) существующие данные
+		this.data = { ...this.data, ...inputData };
 		this.validate();
 	}
 
-	//возвращаем текущие данные товара
 	getData(): Record<string, string> {
-		return this.data;
+		return { ...this.data };
 	}
 
-	//возвращаем ошибки
 	getErrors(): Record<string, string> {
-		return this.errors;
+		return { ...this.errors };
 	}
 
-	//получить все ошибки одной строкой
-	//собирает сообщения об ошибках, фильтрует и соединяет в одну строку
-	getErrorMessage(separator: string = '; '): string {
-		return Object.values(this.errors)
-			.filter((i) => !!i) //убираем пустые строки
-			.join(separator);
-	}
+	getErrorMessage(): string {
+    return this.errors.address ?? '';
+}
 
-	//есть ли ошибки
 	isValid(): boolean {
-		//если errors=0 значит ошибок нет-true
 		return Object.keys(this.errors).length === 0;
 	}
 
-	// правила валидации
+	/** Правила валидации — только адрес */
 	private rules: Record<string, (value: string) => string | null> = {
-		paymentType: (value: string) => (!value ? '' : null),
-		address: (value: string) => {
-			if (isEmpty(value) || value.trim().length < 5) {
-				return 'Необходимо указать адрес';
-			}
-			return null;
-		},
-		email: (value: string) => {
-			const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
-			if (isEmpty(value) || !emailRegex.test(value)) {
-				return '';
-			}
-			return null;
-		},
-		phone: (value: string) => {
-			const phoneRegex = /^\+?\d{10,15}$/;
-			if (isEmpty(value) || !phoneRegex.test(value)) {
-				return '';
-			}
-			return null;
-		},
+		address: (value: string) =>
+			isEmpty(value) || value.trim().length < 5 ? 'Необходимо указать адрес' : null,
 	};
 
-	//проверяем данные на корректность
-	public validate(): void {
+	validate(): void {
 		this.errors = {};
-		for (const field in this.rules) {
-			const value = this.data[field] ?? '';
-			const error = this.rules[field](value);
-			if (error) this.errors[field] = error;
-		}
+		const addressError = this.rules.address(this.data.address ?? '');
+		if (addressError) this.errors.address = addressError;
 	}
 
-	// метод для подготовки данных к API (собираем IOrder)
-toApiOrder(items: string[], total: number): IOrder {
-  const payment = this.data.payment;
-  if (payment !== 'online' && payment !== 'cash') {
-    throw new Error('Не указан корректный способ оплаты');
-  }
-
-  return {
-    items,
-    address: this.data.address,
-    email: this.data.email,
-    phone: this.data.phone,
-    payment,
-    total, // <--- добавляем сюда
-  };
-}}
-
+	/** Подготовка данных к API */
+	toApiOrder(items: string[], total: number): IOrder {
+		return {
+			items,
+			address: this.data.address,
+			email: this.data.email,
+			phone: this.data.phone,
+			payment: this.data.payment as 'online' | 'cash', // приведение типа
+			total,
+		};
+	}
+}
