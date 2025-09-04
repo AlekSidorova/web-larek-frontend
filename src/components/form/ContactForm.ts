@@ -47,7 +47,7 @@ export class ContactForm extends Form {
 		this.validate();
 	}
 
-	// обработка отправки формы
+	//обработка отправки формы
 	protected handleSubmit(): void {
 		const emailValue = this.emailInput.value.trim();
 		const phoneValue = this.phoneInput.value.trim();
@@ -60,7 +60,7 @@ export class ContactForm extends Form {
 		}
 	}
 
-	// валидация формы
+	//валидация формы
 	private validate(): void {
 		const emailValue = this.emailInput.value.trim();
 		const phoneValue = this.phoneInput.value.trim();

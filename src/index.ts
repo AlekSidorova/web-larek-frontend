@@ -23,30 +23,17 @@ import { ContactForm } from './components/form/ContactForm';
 
 //события и модели
 export const events = new EventEmitter();
-export const basketModel = new BasketModel();
-export const order = new OrderModel();
-
-//глобальный объект состояния
-export const appData = {
-	order,
-	setOrderField(field: keyof IOrderForm, value: string) {
-		//обновление полей заказа
-		if (field === 'payment' && (value === 'online' || value === 'cash')) {
-			this.order.setData({ [field]: value });
-		} else {
-			this.order.setData({ [field]: value });
-		}
-	},
-	clearBasket() {
-		//очищает корзину
-		basketModel.clear();
-		events.emit('basket:update');
-	},
-};
+export const basketModel = new BasketModel(events);
+export const orderModel = new OrderModel();
 
 //модалки
 const basketModal = new BasketModal(templates.modalContainer, events);
 const modal = new Modal('#' + templates.modalContainer.id, events);
+
+const deliveryFormEl = templates.order() as HTMLFormElement;
+const deliveryForm = new DeliveryForm(deliveryFormEl, events);
+const contactFormEl = templates.contacts() as HTMLFormElement;
+const contactForm = new ContactForm(contactFormEl, events);
 
 //API и страница
 const api = new AppApi(API_URL, CDN_URL);
@@ -68,17 +55,15 @@ events.on('card:open', ({ card }: { card: ICard }) => {
 
 //добавление товара в корзину
 events.on('cart:add', ({ product }: { product: ICard }) => {
-	basketModel.addItem(product); // модель обновляет данные
-	events.emit('basket:update'); // Presenter реагирует на обновление
+	basketModel.addItem(product); //модель обновляет данные
 });
 
 //удаление товара из корзины
 events.on('cart:remove', ({ id }: { id: string }) => {
-	basketModel.removeItem(id); // модель удаляет товар
-	events.emit('basket:update'); // Presenter обновляет View
+	basketModel.removeItem(id); //модель удаляет товар
 });
 
-//событие обновления корзины и обновляем View
+//обновление корзины и отображение
 events.on('basket:update', () => {
 	//преобразуем товары модели в элементы CardBasket
 	const items = basketModel.getItems().map((item, idx) => {
@@ -86,7 +71,6 @@ events.on('basket:update', () => {
 		return element.render(); // HTMLElement
 	});
 
-	//обновляем View
 	basketModal.list = items;
 	basketModal.total = basketModel.getTotalPrice();
 
@@ -96,17 +80,13 @@ events.on('basket:update', () => {
 
 //шаг 1 - устанавливается форма доставки
 events.on('checkout:step1', () => {
-	const formElement = templates.order();
-	modal.setData({ content: formElement });
-	const formEl = document.querySelector<HTMLFormElement>('form[name="order"]');
-	if (formEl) new DeliveryForm(formEl, events);
+	deliveryForm.reset();
+	modal.setData({ content: deliveryForm.getElement() });
 });
 
-//обновление модели
-events.on(
-	'order:fieldChange',
-	({ field, value }: { field: keyof IOrderForm; value: string }) => {
-		appData.setOrderField(field, value);
+//слушает изменение полей заказа
+events.on('order:fieldChange', ({ field, value }: { field: keyof IOrderForm; value: string }) => {
+		orderModel.setData({ [field]: value });
 	}
 );
 
@@ -115,62 +95,53 @@ events.on('checkout:step1Completed', () => events.emit('checkout:step2'));
 
 //шаг 2 - форма контактных данных
 events.on('checkout:step2', () => {
-	const formElement = templates.contacts();
-	modal.setData({ content: formElement });
-	const formEl = document.querySelector<HTMLFormElement>(
-		'form[name="contacts"]'
-	);
-	if (formEl) new ContactForm(formEl, events);
+	contactForm.reset();
+	modal.setData({ content: contactForm.getElement() });
 });
 
 //завершение шага 2 - создание заказа и отправка на сервер
 events.on('checkout:step2Completed', async () => {
-	const itemsIds = basketModel.getItems().map((i) => i.id);
-	const totalPrice = basketModel.getTotalPrice();
+  const itemsIds = basketModel.getItems().map((i) => i.id);
+  const totalPrice = basketModel.getTotalPrice();
 
-	try {
-		const apiOrder = appData.order.toApiOrder(itemsIds, totalPrice);
-		const result = await api.createOrder(apiOrder);
+  try {
+    const apiOrder = orderModel.toApiOrder(itemsIds, totalPrice);
+    const result = await api.createOrder(apiOrder);
 
-		const successEl = templates.success();
-		const descriptionEl = successEl.querySelector<HTMLParagraphElement>(
-			'.order-success__description'
-		);
-		if (descriptionEl)
-			descriptionEl.textContent = `Списано ${totalPrice} синапсов`;
+    const successEl = templates.success();
+    const descriptionEl = successEl.querySelector<HTMLParagraphElement>('.order-success__description');
+    if (descriptionEl)
+      descriptionEl.textContent = `Списано ${totalPrice} синапсов`;
 
-		const closeBtn = successEl.querySelector<HTMLButtonElement>(
-			'.order-success__close'
-		);
-		if (closeBtn) closeBtn.addEventListener('click', () => modal.close());
+    const closeBtn = successEl.querySelector<HTMLButtonElement>('.order-success__close');
+    if (closeBtn) closeBtn.addEventListener('click', () => modal.close());
 
-		modal.setData({ content: successEl });
-		appData.clearBasket();
-	} catch (err) {
-		console.error(err);
-		alert('Ошибка при отправке заказа');
-	}
+    modal.setData({ content: successEl });
+
+    // очищаем корзину
+    basketModel.clear();
+  } catch (err) {
+    console.error(err);
+    alert('Ошибка при отправке заказа');
+  }
 });
 
 //открывает модалку корзины
-const cartButton = document.querySelector(
-	'.header__basket'
-) as HTMLButtonElement;
+const cartButton = document.querySelector('.header__basket') as HTMLButtonElement;
 cartButton.addEventListener('click', () => {
-	const modalContent =
-		templates.modalContainer.querySelector('.modal__content');
-	if (modalContent) {
-		modalContent.replaceChildren(basketModal.render());
-	}
-	templates.modalContainer.classList.add('modal_active');
+  const modalContent = templates.modalContainer.querySelector('.modal__content');
+  if (modalContent) {
+    modalContent.replaceChildren(basketModal.render());
+  }
+  templates.modalContainer.classList.add('modal_active');
 });
 
 //загрузка карточек
 api.getProductList().then((products) => {
-	const cards = products.map((product) => {
-		const card = new CardsCatalog();
-		card.setData(product);
-		return card;
-	});
-	page.renderCards(cards);
+  const cards = products.map((product) => {
+    const card = new CardsCatalog();
+    card.setData(product);
+    return card;
+  });
+  page.renderCards(cards);
 });

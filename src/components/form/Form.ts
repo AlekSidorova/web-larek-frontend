@@ -45,6 +45,20 @@ export abstract class Form {
 		});
 	}
 
+	public reset(): void {
+		this.formEl.reset();
+
+		Object.keys(this.errors).forEach((field) => {
+			this.hideInputError(field);
+		});
+		this.setValid(false);
+		this.onReset();
+	}
+
+	protected onReset(): void {
+		// по умолчанию ничего
+	}
+
 	protected setValid(isValid: boolean): void {
 		this.submitButton.disabled = !isValid;
 	}
@@ -67,6 +81,10 @@ export abstract class Form {
 		if (data.validInformation)
 			this.showInputError(data.field, data.validInformation);
 		else this.hideInputError(data.field);
+	}
+
+	public getElement(): HTMLFormElement {
+		return this.formEl;
 	}
 
 	protected abstract handleSubmit(): void; //обработка отправки формы

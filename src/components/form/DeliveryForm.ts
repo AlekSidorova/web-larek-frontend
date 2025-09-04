@@ -95,4 +95,14 @@ export class DeliveryForm extends Form {
 		this.events.emit('order:fieldChange', { field, value });
 		this.validate();
 	}
+
+	public getElement(): HTMLFormElement {
+		return this.formEl;
+	}
+
+	protected onReset(): void {
+		this.paymentButtons.forEach((b) => b.classList.remove('button_alt-active'));
+		this.addressInput.value = '';
+		this.errorsEl.textContent = '';
+	}
 }

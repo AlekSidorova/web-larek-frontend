@@ -1,10 +1,11 @@
 import { ICard } from '../../types/index';
+import { IEvents } from '../base/events';
 
 export class BasketModel {
 	private items: ICard[] = [];
 	private totalPrice: number = 0;
 
-	constructor(initialItems: ICard[] = []) {
+	constructor(private events: IEvents, initialItems: ICard[] = []) {
 		this.items = [...initialItems];
 		this.totalPrice = this.calculateTotal();
 	}
@@ -16,8 +17,9 @@ export class BasketModel {
 	addItem(item: ICard): void {
 		//проверяет, есить ли товар id в корзине
 		if (!this.isInCart(item.id)) {
-			this.items.push(item);
-			this.totalPrice = this.calculateTotal();
+				this.items.push(item);
+				this.totalPrice = this.calculateTotal();
+				this.events.emit('basket:update');
 		}
 	}
 
@@ -25,12 +27,14 @@ export class BasketModel {
 	removeItem(id: string): void {
 		this.items = this.items.filter((item) => item.id !== id);
 		this.totalPrice = this.calculateTotal();
+		this.events.emit('basket:update');
 	}
 
 	//очищает корзину
 	clear(): void {
 		this.items = [];
 		this.totalPrice = 0;
+		this.events.emit('basket:update');
 	}
 
 	//возвращает копию товаров в корзине
