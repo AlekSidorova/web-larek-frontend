@@ -1,66 +1,90 @@
 import { Form } from './Form';
-import { appData, events } from '../../index';
-import { OrderModel } from './OrderModel';
 import { IEvents } from '../base/events';
+import { IOrderForm } from '../../types';
 
 export class ContactForm extends Form {
-  private order: OrderModel;
-  private phoneInput: HTMLInputElement;
+	private phoneInput: HTMLInputElement;
+	private emailInput: HTMLInputElement;
 
-  constructor(formEl: HTMLFormElement, events: IEvents, order: OrderModel) {
-    super(formEl, events);
-    this.order = order;
+	constructor(formEl: HTMLFormElement, events: IEvents) {
+		super(formEl, events);
 
-    this.phoneInput = formEl.querySelector<HTMLInputElement>(
-      'input[name="phone"]'
-    )!;
+		this.phoneInput = formEl.querySelector<HTMLInputElement>(
+			'input[name="phone"]'
+		)!;
+		this.emailInput = formEl.querySelector<HTMLInputElement>(
+			'input[name="email"]'
+		)!;
 
-    this.validate();
-  }
+		this.initFieldListeners();
+		this.validate();
+	}
 
-  //обрабатывает изменение полей ввода
-  protected onFieldChange(field: string, value: string) {
-    if (field === 'email') {
-      appData.setOrderField('email', value || ''); //обновляется в appData
-    } else if (field === 'phone') {
-      const formatted = this.formatPhone(value); //сначала форматируется потом обновляется
-      appData.setOrderField('phone', formatted);
-      this.phoneInput.value = formatted;
-    }
+	//слушатели полей
+	private initFieldListeners(): void {
+		this.phoneInput.addEventListener('input', () => {
+			const formatted = this.formatPhone(this.phoneInput.value);
+			this.phoneInput.value = formatted;
+			this.events.emit('order:fieldChange', {
+				field: 'phone',
+				value: formatted,
+			});
+			this.validate();
+		});
 
-    this.validate();
-  }
+		this.emailInput.addEventListener('input', () => {
+			this.events.emit('order:fieldChange', {
+				field: 'email',
+				value: this.emailInput.value,
+			});
+			this.validate();
+		});
+	}
 
-  protected handleSubmit() {
-    events.emit('checkout:step2Completed');
-  }
+	//обрабатывает изменение полей ввода
+	protected onFieldChange(field: keyof IOrderForm, value: string): void {
+		this.events.emit('order:fieldChange', { field, value });
+		this.validate();
+	}
 
-  private validate() {
-    const data = this.order.getData();
-    const email = data.email || '';
-    const phone = data.phone || '';
+	// обработка отправки формы
+	protected handleSubmit(): void {
+		const emailValue = this.emailInput.value.trim();
+		const phoneValue = this.phoneInput.value.trim();
 
-    //форматируем под российские номера
-    const emailValid = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email);
-    const phoneDigits = phone.replace(/\D/g, '');
-    const phoneValid = phoneDigits.length === 11;
+		if (!this.submitButton.disabled) {
+			this.events.emit('checkout:step2Completed', {
+				email: emailValue,
+				phone: phoneValue,
+			});
+		}
+	}
 
-    this.setValid(emailValid && phoneValid);
-  }
+	// валидация формы
+	private validate(): void {
+		const emailValue = this.emailInput.value.trim();
+		const phoneValue = this.phoneInput.value.trim();
 
-  //форматирует номер телефона
-  private formatPhone(value: string): string {
-    let digits = value.replace(/\D/g, '');
-    if (digits.startsWith('7') || digits.startsWith('8'))
-      digits = digits.slice(1);
-    digits = digits.substring(0, 10);
+		const emailValid = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(emailValue);
+		const phoneDigits = phoneValue.replace(/\D/g, '');
+		const phoneValid = phoneDigits.length === 11;
 
-    let formatted = '+7';
-    if (digits.length > 0) formatted += ' (' + digits.substring(0, 3);
-    if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
-    if (digits.length >= 7) formatted += ' ' + digits.substring(6, 8);
-    if (digits.length >= 9) formatted += ' ' + digits.substring(8, 10);
+		this.setValid(emailValid && phoneValid);
+	}
 
-    return formatted;
-  }
+	//форматирует номер телефона
+	private formatPhone(value: string): string {
+		let digits = value.replace(/\D/g, '');
+		if (digits.startsWith('7') || digits.startsWith('8'))
+			digits = digits.slice(1);
+		digits = digits.substring(0, 10);
+
+		let formatted = '+7';
+		if (digits.length > 0) formatted += ' (' + digits.substring(0, 3);
+		if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
+		if (digits.length >= 7) formatted += ' ' + digits.substring(6, 8);
+		if (digits.length >= 9) formatted += ' ' + digits.substring(8, 10);
+
+		return formatted;
+	}
 }

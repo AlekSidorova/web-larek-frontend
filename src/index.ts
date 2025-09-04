@@ -68,30 +68,30 @@ events.on('card:open', ({ card }: { card: ICard }) => {
 
 //добавление товара в корзину
 events.on('cart:add', ({ product }: { product: ICard }) => {
-  basketModel.addItem(product);      // модель обновляет данные
-  events.emit('basket:update');      // Presenter реагирует на обновление
+	basketModel.addItem(product); // модель обновляет данные
+	events.emit('basket:update'); // Presenter реагирует на обновление
 });
 
 //удаление товара из корзины
 events.on('cart:remove', ({ id }: { id: string }) => {
-  basketModel.removeItem(id);        // модель удаляет товар
-  events.emit('basket:update');      // Presenter обновляет View
+	basketModel.removeItem(id); // модель удаляет товар
+	events.emit('basket:update'); // Presenter обновляет View
 });
 
 //событие обновления корзины и обновляем View
 events.on('basket:update', () => {
-  //преобразуем товары модели в элементы CardBasket
-  const items = basketModel.getItems().map((item, idx) => {
-    const element = new CardBasket(item, events, idx + 1);
-    return element.render(); // HTMLElement
-  });
+	//преобразуем товары модели в элементы CardBasket
+	const items = basketModel.getItems().map((item, idx) => {
+		const element = new CardBasket(item, events, idx + 1);
+		return element.render(); // HTMLElement
+	});
 
-  //обновляем View
-  basketModal.list = items;
-  basketModal.total = basketModel.getTotalPrice();
+	//обновляем View
+	basketModal.list = items;
+	basketModal.total = basketModel.getTotalPrice();
 
-  //обновляем счётчик корзины в шапке
-  page.updateCartCounter(basketModel.getItems().length);
+	//обновляем счётчик корзины в шапке
+	page.updateCartCounter(basketModel.getItems().length);
 });
 
 //шаг 1 - устанавливается форма доставки
@@ -102,10 +102,13 @@ events.on('checkout:step1', () => {
 	if (formEl) new DeliveryForm(formEl, events);
 });
 
-//обновление модели 
-events.on('order:fieldChange', ({ field, value }: { field: keyof IOrderForm; value: string }) => {
-	appData.setOrderField(field, value);
-});
+//обновление модели
+events.on(
+	'order:fieldChange',
+	({ field, value }: { field: keyof IOrderForm; value: string }) => {
+		appData.setOrderField(field, value);
+	}
+);
 
 //завершение шага 1 - переход к шагу 2
 events.on('checkout:step1Completed', () => events.emit('checkout:step2'));
@@ -117,7 +120,7 @@ events.on('checkout:step2', () => {
 	const formEl = document.querySelector<HTMLFormElement>(
 		'form[name="contacts"]'
 	);
-	if (formEl) new ContactForm(formEl, events, appData.order);
+	if (formEl) new ContactForm(formEl, events);
 });
 
 //завершение шага 2 - создание заказа и отправка на сервер
@@ -150,13 +153,16 @@ events.on('checkout:step2Completed', async () => {
 });
 
 //открывает модалку корзины
-const cartButton = document.querySelector('.header__basket') as HTMLButtonElement;
+const cartButton = document.querySelector(
+	'.header__basket'
+) as HTMLButtonElement;
 cartButton.addEventListener('click', () => {
-  const modalContent = templates.modalContainer.querySelector('.modal__content');
-  if (modalContent) {
-    modalContent.replaceChildren(basketModal.render());
-  }
-  templates.modalContainer.classList.add('modal_active');
+	const modalContent =
+		templates.modalContainer.querySelector('.modal__content');
+	if (modalContent) {
+		modalContent.replaceChildren(basketModal.render());
+	}
+	templates.modalContainer.classList.add('modal_active');
 });
 
 //загрузка карточек
