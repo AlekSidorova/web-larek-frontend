@@ -17,9 +17,9 @@ export class BasketModel {
 	addItem(item: ICard): void {
 		//проверяет, есить ли товар id в корзине
 		if (!this.isInCart(item.id)) {
-				this.items.push(item);
-				this.totalPrice = this.calculateTotal();
-				this.events.emit('basket:update');
+			this.items.push(item);
+			this.totalPrice = this.calculateTotal();
+			this.events.emit('basket:update');
 		}
 	}
 
@@ -39,7 +39,7 @@ export class BasketModel {
 
 	//возвращает копию товаров в корзине
 	getItems(): ICard[] {
-		return this.items; //возвращаем сам массив
+		return this.items;
 	}
 
 	getTotalPrice(): number {

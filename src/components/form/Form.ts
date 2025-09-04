@@ -55,9 +55,7 @@ export abstract class Form {
 		this.onReset();
 	}
 
-	protected onReset(): void {
-		// по умолчанию ничего
-	}
+	protected onReset(): void {}
 
 	protected setValid(isValid: boolean): void {
 		this.submitButton.disabled = !isValid;

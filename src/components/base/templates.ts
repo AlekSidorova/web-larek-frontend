@@ -12,5 +12,3 @@ export const templates = {
   order: () => cloneTemplate('#order'),
   contacts: () => cloneTemplate('#contacts')
 };
-
-

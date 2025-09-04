@@ -18,6 +18,8 @@ export class Page {
 		this.cartButton = ensureElement<HTMLButtonElement>(cartButtonSelector);
 		this.cartCounter = ensureElement<HTMLElement>(cartCounterSelector);
 		this.events = events;
+
+		this.initCartButton();
 	}
 
 	//отрисовывает массив карточек на странице
@@ -34,5 +36,13 @@ export class Page {
 	updateCartCounter(count: number): void {
 		//переоразовываем число в строку и устанавливаем
 		this.cartCounter.textContent = String(count);
+	}
+
+	//слушатель кнопки корзины
+	private initCartButton(): void {
+		this.cartButton.addEventListener('click', () => {
+			//уведомляем через события, что корзина открыта
+			this.events.emit('basket:open');
+		});
 	}
 }

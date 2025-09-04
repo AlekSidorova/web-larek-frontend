@@ -53,7 +53,7 @@ export class OrderModel implements IOrderModel {
 			address: this.data.address,
 			email: this.data.email,
 			phone: this.data.phone,
-			payment: this.data.payment as 'online' | 'cash', // приведение типа
+			payment: this.data.payment as 'online' | 'cash', //приведение типа
 			total,
 		};
 	}

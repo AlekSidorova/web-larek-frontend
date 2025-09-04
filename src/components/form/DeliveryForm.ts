@@ -39,7 +39,6 @@ export class DeliveryForm extends Form {
 				};
 				const value = paymentMap[button.name] ?? 'cash';
 
-				// эмитим событие, presenter обновляет модель
 				this.events.emit('order:fieldChange', { field: 'payment', value });
 				this.validate();
 			});
@@ -85,13 +84,11 @@ export class DeliveryForm extends Form {
 		const addressValue = this.addressInput.value.trim();
 
 		if (paymentActive && addressValue) {
-			// уведомляем presenter, что шаг завершен
 			this.events.emit('checkout:step1Completed'); //1 шаг успешно завершен
 		}
 	}
 
 	protected onFieldChange(field: keyof IOrderForm, value: string): void {
-		// делаем через события, напрямую модель не трогаем
 		this.events.emit('order:fieldChange', { field, value });
 		this.validate();
 	}
