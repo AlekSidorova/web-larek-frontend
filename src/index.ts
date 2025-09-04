@@ -99,7 +99,12 @@ events.on('checkout:step1', () => {
 	const formElement = templates.order();
 	modal.setData({ content: formElement });
 	const formEl = document.querySelector<HTMLFormElement>('form[name="order"]');
-	if (formEl) new DeliveryForm(formEl, events, appData.order);
+	if (formEl) new DeliveryForm(formEl, events);
+});
+
+//обновление модели 
+events.on('order:fieldChange', ({ field, value }: { field: keyof IOrderForm; value: string }) => {
+	appData.setOrderField(field, value);
 });
 
 //завершение шага 1 - переход к шагу 2

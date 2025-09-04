@@ -1,19 +1,15 @@
 import { Form } from './Form';
-import { appData, events } from '../../index';
-import { OrderModel } from './OrderModel';
 import { IEvents } from '../base/events';
 import { IOrderForm } from '../../types';
 
 export class DeliveryForm extends Form {
-	private order: OrderModel;
 	private addressInput: HTMLInputElement;
 	private paymentButtons: HTMLButtonElement[];
 	private errorsEl: HTMLSpanElement;
 	private isFirstRender = true; //флаг, показывающий, находится ли форма в первом состоянии рендеринга (для ошибок)
 
-	constructor(formEl: HTMLFormElement, events: IEvents, order: OrderModel) {
+	constructor(formEl: HTMLFormElement, events: IEvents) {
 		super(formEl, events);
-		this.order = order;
 
 		this.addressInput = formEl.querySelector<HTMLInputElement>(
 			'input[name="address"]'
@@ -23,18 +19,12 @@ export class DeliveryForm extends Form {
 			formEl.querySelectorAll<HTMLButtonElement>('.order__buttons button')
 		);
 
-		//если уже есть активная кнопка оплаты
-		const active = this.paymentButtons.find((b) =>
-			b.classList.contains('button_alt-active')
-		);
-		if (active) this.updatePayment(active);
-
 		this.initPaymentListeners();
-		this.validate();
+		this.initInputListener();
 		this.isFirstRender = false;
 	}
 
-	//навешиваем обработчики на кнопки оплаты
+	//слушатель кнопок оплаты
 	private initPaymentListeners(): void {
 		this.paymentButtons.forEach((button) => {
 			button.addEventListener('click', () => {
@@ -42,50 +32,67 @@ export class DeliveryForm extends Form {
 					b.classList.remove('button_alt-active')
 				);
 				button.classList.add('button_alt-active');
-				this.updatePayment(button);
+
+				const paymentMap: Record<string, IOrderForm['payment']> = {
+					card: 'online',
+					cash: 'cash',
+				};
+				const value = paymentMap[button.name] ?? 'cash';
+
+				// эмитим событие, presenter обновляет модель
+				this.events.emit('order:fieldChange', { field: 'payment', value });
+				this.validate();
 			});
 		});
 	}
 
-	//обновляем способ оплаты в модели
-	private updatePayment(button: HTMLButtonElement): void {
-		const paymentMap: Record<string, IOrderForm['payment']> = {
-			card: 'online',
-			cash: 'cash',
-		};
-		const value = paymentMap[button.name] ?? 'cash';
-		this.onFieldChange('payment', value);
-	}
-
-	//обработка изменения полей
-	protected onFieldChange(field: keyof IOrderForm, value: string): void {
-		appData.setOrderField(field, value);
-		this.validate();
+	//слушаеть инпут (адрес)
+	private initInputListener(): void {
+		this.addressInput.addEventListener('input', () => {
+			this.events.emit('order:fieldChange', {
+				field: 'address',
+				value: this.addressInput.value.trim(),
+			});
+			this.validate();
+		});
 	}
 
 	//валидация формы
 	private validate(): void {
-		const data = this.order.getData();
 		let error: string | null = null;
 
-		if (data.payment && !this.isFirstRender) {
-			if (
-				!this.addressInput.value.trim() ||
-				this.addressInput.value.trim().length < 5
-			) {
+		const paymentActive = this.paymentButtons.some((b) =>
+			b.classList.contains('button_alt-active')
+		);
+
+		const addressValue = this.addressInput.value.trim();
+
+		if (!this.isFirstRender) {
+			if (!addressValue || addressValue.length < 5) {
 				error = 'Необходимо указать адрес';
 			}
 		}
 
 		this.errorsEl.textContent = error ?? ''; //отображение ошибок
-		this.setValid(!error && !!data.payment); //состояние кнопок
+		this.setValid(!error && paymentActive && !!addressValue); //состояние кнопок
 	}
 
 	//обрабатывает событие отправки формы
 	protected handleSubmit(): void {
-		const data = this.order.getData();
-		if (data.payment && data.address) {
-			events.emit('checkout:step1Completed'); //1шаг успешно закончен
+		const paymentActive = this.paymentButtons.some((b) =>
+			b.classList.contains('button_alt-active')
+		);
+		const addressValue = this.addressInput.value.trim();
+
+		if (paymentActive && addressValue) {
+			// уведомляем presenter, что шаг завершен
+			this.events.emit('checkout:step1Completed'); //1 шаг успешно завершен
 		}
+	}
+
+	protected onFieldChange(field: keyof IOrderForm, value: string): void {
+		// делаем через события, напрямую модель не трогаем
+		this.events.emit('order:fieldChange', { field, value });
+		this.validate();
 	}
 }
