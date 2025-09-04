@@ -35,7 +35,7 @@ export class BasketModel {
 
 	//возвращает копию товаров в корзине
 	getItems(): ICard[] {
-		return [...this.items]; //использование (...) создает поверхностную копию массива
+		return this.items; //возвращаем сам массив
 	}
 
 	getTotalPrice(): number {

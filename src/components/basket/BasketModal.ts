@@ -1,60 +1,56 @@
 import { Component } from '../base/Component';
 import { IEvents } from '../base/events';
-import { basketModel } from '../../index';
 import { ensureElement, cloneTemplate } from '../../utils/utils';
 
 export class BasketModal extends Component<unknown> {
   private events: IEvents;
 
+  private listEl: HTMLElement;
+  private totalEl: HTMLElement;
+  private btn: HTMLButtonElement;
+  private _template: HTMLElement;
+
   constructor(container: HTMLElement, events: IEvents) {
     super(container);
     this.events = events;
-  }
 
-  //метод вызывается для обновления содержимого корзины
-  setData(): void {
-    const template = cloneTemplate('#basket');
-    const listEl = ensureElement<HTMLElement>('.basket__list', template);
-    const totalEl = ensureElement<HTMLElement>('.basket__price', template);
-    const btn = ensureElement<HTMLButtonElement>('.basket__button', template);
+    //клонируем шаблон корзины
+    this._template = cloneTemplate('#basket');
 
-    btn.addEventListener('click', () => {
-      if (!basketModel.getItems().length) return; //если корзина пуста, ничего не делаем
+    //получаем элементы списка, кнопки и цены
+    this.listEl = ensureElement<HTMLElement>('.basket__list', this._template);
+    this.totalEl = ensureElement<HTMLElement>('.basket__price', this._template);
+    this.btn = ensureElement<HTMLButtonElement>('.basket__button', this._template);
+
+    // событие оформления заказа
+    this.btn.addEventListener('click', () => {
       this.events.emit('checkout:step1');
     });
+  }
 
-    const items = basketModel.getItems();
+  //абстрактный метод для соответствия Component
+  setData(_data?: unknown): void {
+  }
 
+  //возвращает готовый элемент для вставки в .modal__content
+  render(): HTMLElement {
+    return this._template;
+  }
+
+  //обновление списка товаров
+  set list(items: HTMLElement[]) {
     if (!items.length) {
-      listEl.innerHTML = '<li class="basket__empty">Корзина пуста</li>';
-      this.setDisabled(btn, true); //делаем кнопку оформления заказа неактивной
-      this.setText(totalEl, '0 синапсов');
+      this.listEl.innerHTML = '<li class="basket__empty">Корзина пуста</li>';
+      this.setDisabled(this.btn, true);
+      this.setText(this.totalEl, '0 синапсов');
     } else {
-      listEl.replaceChildren(
-        ...items.map((item, idx) => {
-          const li = document.createElement('li'); //создаем список товаров
-          li.className = 'basket__item card card_compact';
-          li.innerHTML = `
-            <span class="basket__item-index">${idx + 1}</span>
-            <span class="card__title">${item.title}</span>
-            <span class="card__price">${item.price} синапсов</span>
-            <button class="basket__item-delete" aria-label="удалить"></button>
-          `;
-          const deleteBtn = li.querySelector(
-            '.basket__item-delete'
-          ) as HTMLButtonElement;
-          deleteBtn.addEventListener('click', () => {
-            basketModel.removeItem(item.id); //убираем товар из корзины
-            this.setData(); //обновляем данные в корзине
-            this.events.emit('basket:update'); //оповещаем, что корзина пуста
-          });
-          return li;
-        })
-      );
-      this.setDisabled(btn, false); //активируем кнопку оформления заказа
-      this.setText(totalEl, basketModel.getTotalPrice() + ' синапсов');
+      this.listEl.replaceChildren(...items);
+      this.setDisabled(this.btn, false);
     }
+  }
 
-    this.container.replaceChildren(template); //заменяем содержимое контейнера на обновленный шаблон
+  //обновление стоимости корзины
+  set total(value: number) {
+    this.setText(this.totalEl, `${value} синапсов`);
   }
 }
