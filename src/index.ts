@@ -5,7 +5,7 @@ import { EventEmitter } from './components/base/events';
 import { templates } from './components/base/templates';
 import { API_URL, CDN_URL } from './utils/constants';
 
-import { ICard, IOrderForm } from './types';
+import { ICard, IOrder, IOrderForm } from './types';
 
 import { BasketModal } from './components/basket/BasketModal';
 import { BasketModel } from './components/basket/BasketModel';
@@ -28,7 +28,7 @@ import { ContactForm } from './components/form/ContactForm';
 //события и модели
 export const events = new EventEmitter();
 export const basketModel = new BasketModel(events);
-export const orderModel = new OrderModel();
+export const orderModel = new OrderModel(events);
 
 //модалки
 const basketModal = new BasketModal(templates.modalContainer, events);
@@ -50,7 +50,7 @@ const page = new Page(
 	events
 );
 
-const cardsModel = new CardsModel(api, events);
+const cardsModel = new CardsModel(events);
 
 // --- слушатели событий ---
 
@@ -112,21 +112,46 @@ events.on('checkout:step2', () => {
 
 //завершение шага 2 - создание заказа и отправка на сервер
 events.on('checkout:step2Completed', async () => {
-	const itemsIds = basketModel.getItems().map((i) => i.id);
-	const totalPrice = basketModel.getTotalPrice();
+    const itemsIds = basketModel.getItems().map((i) => i.id);
+    const totalPrice = basketModel.getTotalPrice();
 
-	try {
-		const apiOrder = orderModel.toApiOrder(itemsIds, totalPrice);
-		await api.createOrder(apiOrder);
+    const formData = orderModel.getData();
 
-		successView.setData(totalPrice);
-		modal.setData({ content: successView.render() });
+    const order: IOrder = {
+        items: itemsIds,
+        total: totalPrice,
+        address: formData.address || '',
+        email: formData.email || '',
+        phone: formData.phone || '',
+        payment: formData.payment as 'online' | 'cash',
+    };
 
-		basketModel.clear(); //очищаем корзину
-	} catch (err) {
-		console.error(err);
-		alert('Ошибка при отправке заказа');
-	}
+    try {
+        await api.createOrder(order);
+
+        successView.setData(totalPrice);
+        modal.setData({ content: successView.render() });
+
+        basketModel.clear();
+    } catch (err) {
+        console.error(err);
+        alert('Ошибка при отправке заказа');
+    }
+});
+
+events.on('order:validated', (payload: { data: Record<string, string>, errors: Record<string, string> }) => {
+    const { errors } = payload;
+
+    // отображаем ошибки на форме
+    Object.keys(errors).forEach((field) => {
+        const message = errors[field];
+        if (message) contactForm['showInputError'](field, message);
+        else contactForm['hideInputError'](field);
+    });
+
+    // включаем/выключаем кнопку
+    const isValid = Object.keys(errors).length === 0;
+    contactForm['setValid'](isValid);
 });
 
 //открывает модалку корзины
@@ -146,4 +171,12 @@ events.on('cards:update', ({ cards }: { cards: ICard[] }) => {
 });
 
 //загрузка карточек с сервера
-cardsModel.fetchCards();
+api.getProductList()
+	.then((products) => {
+		cardsModel.setCards(products); //кладем данные в модель
+	})
+	.catch((err) => {
+		console.error('Ошибка при загрузке карточек', err);
+		events.emit('cards:error', { error: err});
+	})
+
