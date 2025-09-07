@@ -112,47 +112,66 @@ events.on('checkout:step2', () => {
 
 //завершение шага 2 - создание заказа и отправка на сервер
 events.on('checkout:step2Completed', async () => {
-    const itemsIds = basketModel.getItems().map((i) => i.id);
-    const totalPrice = basketModel.getTotalPrice();
+	const itemsIds = basketModel.getItems().map((i) => i.id);
+	const totalPrice = basketModel.getTotalPrice();
 
-    const formData = orderModel.getData();
+	const formData = orderModel.getData();
 
-    const order: IOrder = {
-        items: itemsIds,
-        total: totalPrice,
-        address: formData.address || '',
-        email: formData.email || '',
-        phone: formData.phone || '',
-        payment: formData.payment as 'online' | 'cash',
-    };
+	const order: IOrder = {
+		items: itemsIds,
+		total: totalPrice,
+		address: formData.address || '',
+		email: formData.email || '',
+		phone: formData.phone || '',
+		payment: formData.payment as 'online' | 'cash',
+	};
 
-    try {
-        await api.createOrder(order);
+	try {
+		await api.createOrder(order);
 
-        successView.setData(totalPrice);
-        modal.setData({ content: successView.render() });
+		successView.setData(totalPrice);
+		modal.setData({ content: successView.render() });
 
-        basketModel.clear();
-    } catch (err) {
-        console.error(err);
-        alert('Ошибка при отправке заказа');
-    }
+		basketModel.clear();
+	} catch (err) {
+		console.error(err);
+		alert('Ошибка при отправке заказа');
+	}
 });
 
-events.on('order:validated', (payload: { data: Record<string, string>, errors: Record<string, string> }) => {
-    const { errors } = payload;
+events.on(
+	'order:validated',
+	(payload: {
+		data: Record<string, string>;
+		errors: Record<string, string>;
+	}) => {
+		const { errors, data } = payload;
 
-    // отображаем ошибки на форме
-    Object.keys(errors).forEach((field) => {
-        const message = errors[field];
-        if (message) contactForm['showInputError'](field, message);
-        else contactForm['hideInputError'](field);
-    });
+		// --- DeliveryForm ---
+		//показываем ошибку адреса
+		const addressError = errors.address ?? '';
+		deliveryForm.errorsEl.textContent = addressError;
 
-    // включаем/выключаем кнопку
-    const isValid = Object.keys(errors).length === 0;
-    contactForm['setValid'](isValid);
-});
+		//проверяем, выбрана ли оплата
+		const paymentActive = deliveryForm.paymentButtons.some((b) =>
+			b.classList.contains('button_alt-active')
+		);
+
+		//включаем/выключаем кнопку
+		const deliveryValid = !addressError && paymentActive && !!data.address;
+		deliveryForm.setValid(deliveryValid);
+
+		// --- ContactForm ---
+		Object.keys(errors).forEach((field) => {
+			const message = errors[field];
+			if (message) contactForm.showInputError(field, message);
+			else contactForm.hideInputError(field);
+		});
+
+		const contactValid = Object.keys(errors).length === 0;
+		contactForm.setValid(contactValid);
+	}
+);
 
 //открывает модалку корзины
 events.on('basket:open', () => {
@@ -171,12 +190,12 @@ events.on('cards:update', ({ cards }: { cards: ICard[] }) => {
 });
 
 //загрузка карточек с сервера
-api.getProductList()
+api
+	.getProductList()
 	.then((products) => {
 		cardsModel.setCards(products); //кладем данные в модель
 	})
 	.catch((err) => {
 		console.error('Ошибка при загрузке карточек', err);
-		events.emit('cards:error', { error: err});
-	})
-
+		events.emit('cards:error', { error: err });
+	});

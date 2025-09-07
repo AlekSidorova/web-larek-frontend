@@ -4,9 +4,8 @@ import { IOrderForm } from '../../types';
 
 export class DeliveryForm extends Form {
 	private addressInput: HTMLInputElement;
-	private paymentButtons: HTMLButtonElement[];
-	private errorsEl: HTMLSpanElement;
-	private isFirstRender = true; //флаг, показывающий, находится ли форма в первом состоянии рендеринга (для ошибок)
+	public  paymentButtons: HTMLButtonElement[];
+	public  errorsEl: HTMLSpanElement;
 
 	constructor(formEl: HTMLFormElement, events: IEvents) {
 		super(formEl, events);
@@ -14,14 +13,15 @@ export class DeliveryForm extends Form {
 		this.addressInput = formEl.querySelector<HTMLInputElement>(
 			'input[name="address"]'
 		)!;
+
 		this.errorsEl = formEl.querySelector<HTMLSpanElement>('.form__errors')!;
+
 		this.paymentButtons = Array.from(
 			formEl.querySelectorAll<HTMLButtonElement>('.order__buttons button')
 		);
 
 		this.initPaymentListeners();
 		this.initInputListener();
-		this.isFirstRender = false;
 	}
 
 	//слушатель кнопок оплаты
@@ -40,43 +40,20 @@ export class DeliveryForm extends Form {
 				const value = paymentMap[button.name] ?? 'cash';
 
 				this.events.emit('order:fieldChange', { field: 'payment', value });
-				this.validate();
 			});
 		});
 	}
 
-	//слушаеть инпут (адрес)
+	//слушатель адреса
 	private initInputListener(): void {
 		this.addressInput.addEventListener('input', () => {
 			this.events.emit('order:fieldChange', {
 				field: 'address',
 				value: this.addressInput.value.trim(),
 			});
-			this.validate();
 		});
 	}
 
-	//валидация формы
-	private validate(): void {
-		let error: string | null = null;
-
-		const paymentActive = this.paymentButtons.some((b) =>
-			b.classList.contains('button_alt-active')
-		);
-
-		const addressValue = this.addressInput.value.trim();
-
-		if (!this.isFirstRender) {
-			if (!addressValue || addressValue.length < 5) {
-				error = 'Необходимо указать адрес';
-			}
-		}
-
-		this.errorsEl.textContent = error ?? ''; //отображение ошибок
-		this.setValid(!error && paymentActive && !!addressValue); //состояние кнопок
-	}
-
-	//обрабатывает событие отправки формы
 	protected handleSubmit(): void {
 		const paymentActive = this.paymentButtons.some((b) =>
 			b.classList.contains('button_alt-active')
@@ -84,17 +61,12 @@ export class DeliveryForm extends Form {
 		const addressValue = this.addressInput.value.trim();
 
 		if (paymentActive && addressValue) {
-			this.events.emit('checkout:step1Completed'); //1 шаг успешно завершен
+			this.events.emit('checkout:step1Completed'); //1 шаг завершен
 		}
 	}
 
 	protected onFieldChange(field: keyof IOrderForm, value: string): void {
 		this.events.emit('order:fieldChange', { field, value });
-		this.validate();
-	}
-
-	public getElement(): HTMLFormElement {
-		return this.formEl;
 	}
 
 	protected onReset(): void {

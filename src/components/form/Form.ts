@@ -57,16 +57,16 @@ export abstract class Form {
 
 	protected onReset(): void {}
 
-	protected setValid(isValid: boolean): void {
+	public setValid(isValid: boolean): void {
 		this.submitButton.disabled = !isValid;
 	}
 
-	protected showInputError(field: string, message: string): void {
+	public showInputError(field: string, message: string): void {
 		const el = this.errors[field];
 		if (el) el.textContent = message;
 	}
 
-	protected hideInputError(field: string): void {
+	public hideInputError(field: string): void {
 		const el = this.errors[field];
 		if (el) el.textContent = '';
 	}
