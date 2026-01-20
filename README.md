@@ -40,3 +40,6 @@
 ![Order page](./screenshot/order2.png)
 
 ### Для подробной документации по архитектуре и внутренней логике проекта см. [TECH_DOC.md](docs/TECH_DOC.md)
+
+## Репозиторий
+[Веб-ларек](https://github.com/AlekSidorova/web-larek-frontend)
